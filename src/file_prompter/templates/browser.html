@@ -50,13 +50,23 @@
             flex-grow: 1; /* Allow container to fill remaining height */
             padding: 15px;
             gap: 15px; /* Space between columns */
+            overflow: hidden; /* Prevent container itself from scrolling */
         }
-        .column { flex: 1; background-color: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 15px; overflow-y: auto; }
-        .column-left { max-width: 40%; } /* Adjust width as needed */
-        .column-right { display: flex; flex-direction: column; }
+        .column {
+            flex: 1;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            padding: 15px;
+            display: flex;
+            flex-direction: column; /* Make columns flex containers */
+            overflow-y: auto; /* Allow individual columns to scroll */
+        }
+        .column-left { max-width: 40%; min-width: 250px;} /* Adjust width as needed */
+        .column-right { /* Right column already flex column */ }
 
-        h2 { color: #495057; border-bottom: 1px solid #e9ecef; padding-bottom: 5px; margin-top: 0; margin-bottom: 15px; font-size: 1.2em; }
-        ul { list-style: none; padding: 0; margin: 0; }
+        h2 { color: #495057; border-bottom: 1px solid #e9ecef; padding-bottom: 5px; margin-top: 0; margin-bottom: 15px; font-size: 1.2em; flex-shrink: 0; /* Prevent shrinking */}
+        ul { list-style: none; padding: 0; margin: 0; flex-shrink: 0;}
         li { margin-bottom: 8px; }
         a { text-decoration: none; color: #007bff; }
         a:hover { text-decoration: underline; }
@@ -77,30 +87,36 @@
             font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
             font-size: 0.9em;
             background-color: #f8f9fa; /* Light background for textareas */
+            flex-shrink: 0; /* Prevent shrinking */
         }
+        #final-output-textarea { flex-grow: 1; /* Allow output textarea to grow */ }
+
         button {
             background-color: #007bff; color: white; padding: 10px 15px;
             border: none; border-radius: 4px; cursor: pointer; font-size: 1em;
             transition: background-color 0.2s ease;
+            flex-shrink: 0; /* Prevent shrinking */
         }
-        button:hover { background-color: #0056b3; }
-        button.secondary { background-color: #6c757d; margin-bottom: 10px; font-size: 0.85em; padding: 5px 10px; }
-        button.secondary:hover { background-color: #5a6268; }
+        button:hover:not(:disabled) { background-color: #0056b3; }
+        button:disabled { background-color: #6c757d; cursor: not-allowed; }
 
-        .path-nav { margin-bottom: 15px; font-size: 0.9em; color: #6c757d; background-color: #e9ecef; padding: 5px 10px; border-radius: 4px; }
+        button.secondary { background-color: #6c757d; margin-bottom: 10px; font-size: 0.85em; padding: 5px 10px; }
+        button.secondary:hover:not(:disabled) { background-color: #5a6268; }
+
+        .path-nav { margin-bottom: 15px; font-size: 0.9em; color: #6c757d; background-color: #e9ecef; padding: 5px 10px; border-radius: 4px; flex-shrink: 0;}
         .path-nav code { background-color: transparent; padding: 0; }
 
         .error { color: #dc3545; font-weight: bold; margin-top: 10px; background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 8px; border-radius: 4px; font-size: 0.9em;}
-        .flash-messages { padding: 0 15px; } /* Container for flashed messages */
+        .flash-messages { padding: 0 15px; flex-shrink: 0;} /* Container for flashed messages */
         .flash-messages .error, .flash-messages .warning { margin-top: 10px; padding: 10px; border-radius: 4px; }
         .flash-messages .warning { color: #856404; background-color: #fff3cd; border: 1px solid #ffeeba; }
 
-        #selected-files-list { font-size: 0.85em; margin-bottom: 15px; max-height: 150px; overflow-y: auto; background-color: #e9ecef; padding: 10px; border-radius: 4px;}
+        #selected-files-list { font-size: 0.85em; margin-bottom: 15px; max-height: 150px; overflow-y: auto; background-color: #e9ecef; padding: 10px; border-radius: 4px; flex-shrink: 0;}
         #selected-files-list li { margin-bottom: 4px; word-break: break-all; } /* Prevent long names breaking layout */
 
-        #preview-area { border: 1px solid #dee2e6; border-radius: 4px; margin-top: 10px; }
+        #preview-area { border: 1px solid #dee2e6; border-radius: 4px; margin-top: 10px; flex-shrink: 0;}
         #preview-content {
-            max-height: 300px; /* Limit preview height */
+            max-height: 200px; /* Limit preview height */
             overflow-y: auto;
             display: none; /* Initially hidden */
             padding: 10px;
@@ -122,6 +138,23 @@
              padding: 10px;
              display: none; /* Hidden by default */
          }
+        #copy-feedback {
+            display: inline-block;
+            margin-left: 15px;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            font-weight: bold;
+            opacity: 0; /* Hidden initially */
+            transition: opacity 0.5s ease-out;
+            vertical-align: middle; /* Align with button */
+        }
+        #copy-feedback.success { background-color: #d4edda; color: #155724; opacity: 1; }
+        #copy-feedback.error { background-color: #f8d7da; color: #721c24; opacity: 1; }
+        #copy-feedback.warning { background-color: #fff3cd; color: #856404; opacity: 1; }
+
+        #main-actions { flex-shrink: 0; } /* Prevent actions area from shrinking */
+        .output-area { display: flex; flex-direction: column; flex-grow: 1; margin-top: 20px;} /* Allow output area to grow */
     </style>
 </head>
 <body>
@@ -187,9 +220,7 @@
 
         <!-- Right Column: Actions & Output -->
         <div class="column column-right">
-             <form action="{{ url_for('process_files') }}" method="post" id="main-form">
-                 <!-- Hidden field to remember the path for the POST request -->
-                 <input type="hidden" name="current_path" value="{{ current_relative_path }}">
+             <div id="main-actions"> <!-- Actions Container -->
 
                 <h2>Selected Files (<span id="selected-count">0</span>)</h2>
                 <ul id="selected-files-list">
@@ -205,36 +236,44 @@
                 </div>
 
                 <h2>Your Prompt</h2>
-                <textarea name="prompt" rows="5" placeholder="Enter your AI prompt here... (Optional)"></textarea>
+                <textarea id="prompt-textarea" name="prompt" rows="5" placeholder="Enter your AI prompt here... (Optional)"></textarea>
 
-                <button type="submit">Generate Final Output</button>
-            </form>
+                <!-- Generate & Copy Button + Feedback Area -->
+                <div>
+                    <button type="button" id="generate-copy-btn">Generate & Copy to Clipboard</button>
+                    <span id="copy-feedback"></span>
+                </div>
+            </div> <!-- End main-actions -->
 
-            {% if output %}
-            <div class="output-area" style="margin-top: 20px;"> <!-- Added margin -->
-                <h2>Final Output (Copy Below)</h2>
-                <textarea readonly rows="15">{{ output }}</textarea>
+             <!-- Output Area: Always include the structure now -->
+            <div class="output-area"> <!-- Removed style, using flexbox now -->
+                <h2>Final Generated Output</h2>
+                <textarea id="final-output-textarea" readonly placeholder="Generated output will appear here after clicking the button above..."></textarea>
             </div>
-            {% endif %}
 
-        </div>
-    </div>
+        </div> <!-- End right column -->
+    </div> <!-- End container -->
 
     <script>
-        const fileCheckboxes = document.querySelectorAll('.file-checkbox');
+        // --- Get DOM Elements ---
         const selectedFilesList = document.getElementById('selected-files-list');
         const selectedCountSpan = document.getElementById('selected-count');
         const previewContentEl = document.getElementById('preview-content');
         const previewErrorEl = document.getElementById('preview-error');
         const togglePreviewBtn = document.getElementById('toggle-preview-btn');
         const previewLoadingEl = document.getElementById('preview-loading');
-        const fileBrowserList = document.getElementById('file-browser-list'); // Container for checkboxes
+        const fileBrowserList = document.getElementById('file-browser-list');
+        const promptTextarea = document.getElementById('prompt-textarea'); // Get prompt textarea
+        const generateCopyBtn = document.getElementById('generate-copy-btn'); // Get the button
+        const finalOutputTextarea = document.getElementById('final-output-textarea'); // Get output textarea
+        const copyFeedbackEl = document.getElementById('copy-feedback'); // Get feedback span
 
         let selectedFiles = []; // Keep track of selected file paths
+        let fetchTimeout; // For preview debouncing
 
-        // --- Function to update UI based on selection ---
+        // --- Function to update UI based on selection (updates preview) ---
         function updateSelectionUI() {
-            selectedFiles = [];
+             selectedFiles = [];
             document.querySelectorAll('.file-checkbox:checked').forEach(checkbox => {
                 selectedFiles.push(checkbox.value);
             });
@@ -252,24 +291,26 @@
             }
             selectedCountSpan.textContent = selectedFiles.length;
 
-            // Fetch and update preview content
-            fetchPreviewContent();
+            // Fetch and update preview content if preview is visible
+            if (previewContentEl.style.display === 'block') {
+                 fetchPreviewContent();
+            } else {
+                 // Clear preview content if hidden, but don't fetch
+                 previewContentEl.textContent = '';
+                 previewErrorEl.textContent = '';
+                 previewLoadingEl.style.display = 'none';
+            }
         }
 
-        // --- Function to fetch preview content from backend ---
-        let fetchTimeout; // For debouncing
+        // --- Function to fetch PREVIEW content from backend ---
         function fetchPreviewContent() {
              clearTimeout(fetchTimeout); // Clear previous timeout if any
              previewLoadingEl.style.display = 'block'; // Show loading
              previewErrorEl.textContent = ''; // Clear previous errors
+             previewContentEl.textContent = ''; // Clear old content
 
              if (selectedFiles.length === 0) {
-                 previewContentEl.textContent = ''; // Clear preview if nothing selected
                  previewLoadingEl.style.display = 'none';
-                 // Optionally hide preview area if empty and it's visible
-                 // if (previewContentEl.style.display !== 'none') {
-                 //     previewContentEl.style.display = 'none';
-                 // }
                  return;
              }
 
@@ -279,22 +320,24 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        // Add CSRF token header if needed in future Flask versions/configs
                     },
                     body: JSON.stringify({ selected_files: selectedFiles })
                 })
                 .then(response => {
                     if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
+                        // Try to get error message from response if possible
+                        return response.text().then(text => {
+                             throw new Error(`HTTP error! Status: ${response.status}, Message: ${text}`);
+                        });
                     }
                     return response.json();
-                })
+                 })
                 .then(data => {
                     previewLoadingEl.style.display = 'none'; // Hide loading
                     if (data.preview_content) {
                         previewContentEl.textContent = data.preview_content;
                     } else {
-                        previewContentEl.textContent = '(No content retrieved or files were empty)';
+                        previewContentEl.textContent = '(No preview content retrieved or files were empty)';
                     }
                     if (data.errors && data.errors.length > 0) {
                         previewErrorEl.textContent = 'Preview errors: ' + data.errors.join('; ');
@@ -309,9 +352,111 @@
             }, 300); // Debounce delay in milliseconds
         }
 
-        // --- Event Listeners ---
+        // --- Function to handle Generate & Copy ---
+        async function handleGenerateAndCopy() {
+            const currentPrompt = promptTextarea.value;
+            const currentSelectedFiles = selectedFiles; // Use the globally tracked list
 
-        // Use event delegation on the list container for checkboxes
+            if (currentSelectedFiles.length === 0 && !currentPrompt.trim()) {
+                showCopyFeedback("Nothing to generate (no files selected, no prompt).", "warning"); // Use warning class
+                return;
+            }
+
+            // Provide user feedback
+            generateCopyBtn.disabled = true;
+            generateCopyBtn.textContent = 'Generating...';
+            finalOutputTextarea.value = 'Generating...'; // Show in textarea too
+            clearCopyFeedback(); // Clear previous feedback
+
+            try {
+                const response = await fetch("{{ url_for('process_files') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        selected_files: currentSelectedFiles,
+                        prompt: currentPrompt
+                    })
+                });
+
+                const data = await response.json(); // Assume response is always JSON, even for errors if backend handles it
+
+                if (!response.ok) {
+                     // Use error message from JSON if available, otherwise generic error
+                     const errorMsg = data.error || `Server error: ${response.status}`;
+                     throw new Error(errorMsg);
+                }
+
+                // Display potential errors from backend file processing
+                let feedbackMsg = "";
+                if (data.errors && data.errors.length > 0) {
+                    feedbackMsg = "Generated with errors: " + data.errors.join("; ");
+                    // Append errors to the main output for visibility
+                     finalOutputTextarea.value = data.final_output + "\n\n--- ERRORS ---\n" + data.errors.join("\n");
+                } else {
+                     finalOutputTextarea.value = data.final_output; // Display final output
+                }
+
+
+                // Attempt to copy to clipboard using the Clipboard API
+                if (data.final_output) {
+                    if (!navigator.clipboard) {
+                         // Clipboard API not available (e.g., insecure context - http)
+                         showCopyFeedback(feedbackMsg ? feedbackMsg + " | Manual copy needed (HTTPS required for clipboard API)." : "Generated. Manual copy needed (HTTPS required for clipboard API).", "warning");
+                         finalOutputTextarea.select(); // Select text for easy manual copy
+                    } else {
+                         try {
+                             await navigator.clipboard.writeText(data.final_output);
+                             showCopyFeedback(feedbackMsg ? feedbackMsg + " | Copied!" : "Copied to clipboard!", "success");
+                         } catch (clipErr) {
+                             console.error('Failed to copy automatically:', clipErr);
+                             showCopyFeedback(feedbackMsg ? feedbackMsg + " | Auto-copy failed!" : "Generated, but failed to auto-copy.", "warning");
+                             finalOutputTextarea.select(); // Select text for easy manual copy
+                         }
+                    }
+                } else if (!feedbackMsg) {
+                     // No output and no specific errors reported by backend
+                     showCopyFeedback("Generated empty output.", "warning");
+                     finalOutputTextarea.value = '';
+                } else {
+                    // Only errors, no output
+                    showCopyFeedback(feedbackMsg, "error");
+                    // Display only errors in the textarea
+                     finalOutputTextarea.value = "--- ERRORS ---\n" + data.errors.join("\n");
+                }
+
+
+            } catch (error) {
+                console.error('Error generating/copying:', error);
+                showCopyFeedback(`Error: ${error.message}`, "error");
+                finalOutputTextarea.value = `Error generating output: ${error.message}`;
+            } finally {
+                // Reset button state after a short delay
+                setTimeout(() => {
+                    generateCopyBtn.disabled = false;
+                    generateCopyBtn.textContent = 'Generate & Copy to Clipboard';
+                }, 1500); // Keep disabled slightly longer to read feedback
+            }
+        }
+
+        // --- Helper functions for feedback ---
+        function showCopyFeedback(message, type = "success") {
+            copyFeedbackEl.textContent = message;
+            copyFeedbackEl.className = type; // 'success', 'error', or 'warning'
+            copyFeedbackEl.style.opacity = '1'; // Make visible
+            // Fade out after a few seconds
+            setTimeout(clearCopyFeedback, 4000); // Hide after 4 seconds
+        }
+
+        function clearCopyFeedback() {
+             copyFeedbackEl.textContent = '';
+             copyFeedbackEl.className = '';
+             copyFeedbackEl.style.opacity = '0'; // Ensure it's visually hidden
+        }
+
+
+        // --- Event Listeners ---
         if (fileBrowserList) {
              fileBrowserList.addEventListener('change', (event) => {
                  if (event.target.classList.contains('file-checkbox')) {
@@ -319,21 +464,23 @@
                  }
              });
         }
-
-
-        // Toggle preview visibility
         if (togglePreviewBtn) {
             togglePreviewBtn.addEventListener('click', () => {
                 const isHidden = previewContentEl.style.display === 'none' || previewContentEl.style.display === '';
                 previewContentEl.style.display = isHidden ? 'block' : 'none';
-                 // Fetch content only if showing and preview is empty? Or always keep it updated?
-                 // Let's assume it's updated by checkbox changes.
+                if (isHidden) {
+                    fetchPreviewContent(); // Fetch content when showing
+                }
             });
         }
+        // Add listener to the generate/copy button
+        if (generateCopyBtn) {
+            generateCopyBtn.addEventListener('click', handleGenerateAndCopy);
+        }
 
-        // --- Initial UI setup on page load ---
-        // Ensure initial count is correct (might be > 0 if page reloads with form data, unlikely here)
-        updateSelectionUI();
+        // --- Initial UI setup ---
+        updateSelectionUI(); // Initialize selected files list/count
+        clearCopyFeedback(); // Ensure feedback is hidden on load
 
     </script>
 
