@@ -1,3 +1,17 @@
+# Oyren Prompter
+
+**Oyren Prompter** is a local web tool that allows you to browse and select multiple files, combine their contents, and prepend a custom prompt. It’s perfect for preparing contextual input for AI chat models — while keeping your files 100% private and on your machine.
+
+---
+
+## 🌐 About [oyren.dev](https://oyren.dev)
+
+> **oyren.dev** is a browser-based AI development platform that helps you build, test, and refine code faster using multiple AI models — no switching between tools, no file uploads. It’s designed for rapid prototyping and real-time code feedback, all in the browser.
+
+**Oyren Prompter** is a companion utility for oyren.dev to help users easily construct prompts from their codebase and use them with AI tools.
+
+---
+
 ## Support This Project
 
 If you find Oyren Prompter useful, consider supporting its development!
@@ -10,119 +24,67 @@ Or, use the direct link: [https://buymeacoffee.com/vorashil](https://buymeacoffe
 
 ---
 
-# Oyren Prompter
+## 🚀 Getting Started
 
-A simple, local web-based tool to browse files and directories, select multiple files, concatenate their content, and
-prepend a custom prompt. Ideal for quickly gathering context from codebases or text files to use with AI chat models (
-like ChatGPT, Claude, Gemini, etc.).
+### Prerequisites
 
-The tool runs a local web server, and you interact with it through your browser, ensuring your files stay on your
-machine. Powered by [Oyren.dev](https://oyren.dev).
+- Python 3.7+
+- Git
+- `pipx` (recommended)
+- Modern web browser
 
-## Quick Start
+Install `pipx` using Homebrew (macOS):
 
-**Prerequisites:** Python 3.7+, Git, and `pipx` (see one-time setup below).
+``` 
+brew install pipx
+pipx ensurepath 
+pipx --version
+``` 
 
-1. `cd` into the directory you want to work with:
-   ```bash
-   cd /path/to/your/project/or/files
-   ```
-2. Run the prompter directly from GitHub using `pipx`:
-   ```bash
-   pipx run --spec git+https://github.com/oyren-dev/oyren-prompter.git oyren-prompter
-   ```
-3. Open your browser to `http://127.0.0.1:5000`.
-4. Press `CTRL+C` in the terminal to stop.
+If `pipx` doesn't get installed properly, try restarting your terminal.
 
-## Prerequisites (One-Time Setup)
+---
 
-Before running Oyren Prompter using the recommended `pipx` method, ensure you have:
+### 🛠 How to Run
 
-1. **Python:** Version 3.7 or higher.
-    * **macOS/Linux:** Check with `python3 --version`. Install from [python.org](https://www.python.org/) if needed.
-    * **Windows:** Check with `python --version` or `py --version`. Install from [python.org](https://www.python.org/)
-      or the Microsoft Store. **Ensure Python is added to your PATH during installation.**
-2. **Git:** Required to fetch code from GitHub.
-    * **macOS:** Often pre-installed or installable via `xcode-select --install` or `brew install git`.
-    * **Windows/Linux:** Download from [git-scm.com](https://git-scm.com/).
-3. **pipx:** The tool used to run Python applications in isolated environments. Install it **once** based on your OS:
+You can launch Oyren Prompter with a single command:
 
-    * **macOS (Recommended):**
-        * Install Homebrew if you don't have it:
-          `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
-        * Install `pipx` using Homebrew:
-          ```bash
-          brew install pipx
-          pipx ensurepath
-          ```
-        * **Restart your terminal** after running `ensurepath`.
+``` 
+pipx run --spec git+https://github.com/oyren-dev/oyren-prompter.git oyren-prompter
+``` 
 
-    * **Windows:**
-        * Install `pipx` using Python's pip (ensure Python is in your PATH):
-          ```bash
-          # You might need to use 'py -m pip' instead of 'python -m pip'
-          python -m pip install --user pipx
-          python -m pipx ensurepath
-          ```
-        * **Restart your Command Prompt or PowerShell** after running `ensurepath`.
+This will start a local Flask server that scans your files. You can then:
 
-    * **Linux (Debian/Ubuntu/Mint):**
-      ```bash
-      sudo apt update
-      sudo apt install pipx
-      pipx ensurepath
-      ```
-        * **Restart your terminal** after running `ensurepath`. *(Alternatively,
-          use `python3 -m pip install --user pipx` followed by `python3 -m pipx ensurepath` if the package isn't
-          available or up-to-date).*
+- Select the files you want to use
+- Combine them into a single context
+- Prepend a custom prompt
+- Use the result with your favorite AI tool
 
-    * **Linux (Fedora/CentOS/RHEL):**
-      ```bash
-      sudo dnf install pipx
-      pipx ensurepath
-      ```
-        * **Restart your terminal** after running `ensurepath`. *(Alternatively,
-          use `python3 -m pip install --user pipx` followed by `python3 -m pipx ensurepath`)*.
+✅ All files stay local — nothing is ever uploaded.
 
-    * **Verify pipx:** After restarting your terminal, run `pipx --version`. You should see a version number.
+---
 
-## Running Oyren Prompter (Recommended Method: pipx)
+## 🤝 Contributing
 
-Once the prerequisites (Python, Git, pipx) are set up, you can run Oyren Prompter from any directory:
+We welcome contributions! Here’s how to get started:
 
-1. **Navigate to Target Directory:** Open your terminal and change (`cd`) to the folder containing the files you want to
-   work with.
-   ```bash
-   cd /path/to/your/project/or/files
-   ```
-2. **Run:** Use `pipx` to execute the latest version directly from GitHub:
-   ```bash
-   pipx run --pip-args="--no-cache-dir" --spec git+https://github.com/oyren-dev/oyren-prompter.git oyren-prompter
-   ```
-* This downloads the code temporarily, sets up its environment, and runs it without permanently installing it.*
+1. **Fork the repository**
+2. **Create a feature branch**  
+   ```  git checkout -b your-feature-name ``` 
+3. **Make your changes**
+4. **Commit and push**  
+   ```  git commit -m "Describe your change" ```   
+   ```  git push origin your-feature-name ``` 
+5. **Open a pull request** to the `main` branch
 
-3. **Access:** Open your web browser to `http://127.0.0.1:5000`.
-4. **Stop:** Press `CTRL+C` in the terminal where `pipx run` is active.
+### Contribution Guidelines
 
+- Write clear and concise commit messages
+- Document any new features or config changes
+- Feel free to open issues for bugs, questions, or suggestions
 
-## Usage
+---
 
-(Instructions for using the web interface remain the same - browse, select, preview, prompt, generate, copy, paste)
+## 📄 License
 
-1. **Browse:** Click directory names (`📁`) to navigate. Click `⬆️ .. [Up]` to go back.
-2. **Select:** Check boxes next to files (`📄`). The "Selected Files" list updates instantly.
-3. **Preview (Optional):** Click "Show/Hide Content Preview" to view/hide combined content of selected files.
-4. **Prompt:** Enter your instructions in the "Your Prompt" box.
-5. **Generate:** Click "Generate Final Output".
-6. **Copy:** Select and copy the text from the "Final Output (Copy Below)" area.
-7. **Paste:** Paste into your AI chat interface.
-
-## Contributing
-
-Found a bug or have an idea? Please open an issue on the GitHub repository:
-[https://github.com/oyren-dev/oyren-prompter/issues](https://github.com/oyren-dev/oyren-prompter/issues)
-
-## License
-
-This project is licensed under the MIT License. See
-the [LICENSE](https://github.com/oyren-dev/oyren-prompter/blob/main/LICENSE) file for details.
+This project is licensed under the [GNU General Public License v3.0](https://www.gnu.org/licenses/gpl-3.0.en.html).
