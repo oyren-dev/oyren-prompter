@@ -8,7 +8,7 @@ import json
 # (Keep pkg_resources import and template/static folder logic)
 try:
     import pkg_resources
-    base_path = pkg_resources.resource_filename('oyren_prompter', '')
+    base_path = pkg_resources.resource_filename('file_prompter', '')
     template_folder = os.path.join(base_path, 'templates')
     static_folder = os.path.join(base_path, 'static')
     if not os.path.isdir(template_folder):
