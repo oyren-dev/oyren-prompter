@@ -30,7 +30,7 @@ dependencies = [
 
 # ---- This is the crucial part for the command line ----
 [project.scripts]
-file-prompter = "oyren_prompter.app:run_server"
+file-prompter = "file_prompter.app:run_server"
 # "command-name = package_name.module_name:function_name"
 
 [tool.setuptools.packages.find]
