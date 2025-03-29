@@ -2,7 +2,7 @@
 
 **Oyren Prompter** is a local web tool that allows you to browse and select multiple files, combine their contents, and prepend a custom prompt. It’s perfect for preparing contextual input for AI chat models — while keeping your files 100% private and on your machine.
 
-![Oyren Prompter Demo](./oyren-prompter-demo.gif)
+![Oyren Prompter Demo](./oyren-prompter-demo.mp4)
 
 ---
 
