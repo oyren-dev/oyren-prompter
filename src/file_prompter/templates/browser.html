@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Oyren File Prompter</title>
     <style>
+        /* ... (keep all existing CSS styles) ... */
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
             margin: 0;
@@ -158,16 +159,15 @@
     </style>
 </head>
 <body>
+    <!-- ... (keep header and flash messages area) ... -->
     <div class="header">
         <div class="header-brand">
-            <!-- Use url_for to get the correct path to the static logo -->
             <img src="{{ url_for('static', filename='logo.png') }}" alt="Oyren Logo">
             <h1>Oyren File Prompter</h1>
         </div>
         <a href="https://oyren.dev" target="_blank" rel="noopener noreferrer">Visit Oyren.dev</a>
     </div>
 
-    <!-- Flash Messages Area -->
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         <div class="flash-messages">
@@ -187,12 +187,12 @@
             </div>
 
             <ul id="file-browser-list">
+                <!-- Rendered by Flask based on current path -->
                 {% if parent_path is not none %}
                 <li class="dir-item"><a href="{{ url_for('browse', path=parent_path) }}">
                     <span class="dir-icon">⬆️</span> .. [Up]</a>
                 </li>
                 {% endif %}
-
                 {% for dir_item in directories %}
                 <li class="dir-item">
                     <a href="{{ url_for('browse', path=dir_item.rel_path) }}">
@@ -200,16 +200,15 @@
                     </a>
                 </li>
                 {% endfor %}
-
                 {% for file_item in files %}
                 <li class="file-item">
-                    <input type="checkbox" name="selected_files" value="{{ file_item.rel_path }}" id="file-{{ loop.index }}" class="file-checkbox">
-                     <label for="file-{{ loop.index }}">
+                    <!-- Checkbox value is the relative path -->
+                    <input type="checkbox" name="selected_files" value="{{ file_item.rel_path }}" id="cb-{{ file_item.rel_path|replace('/', '-')|replace('.', '-') }}" class="file-checkbox">
+                     <label for="cb-{{ file_item.rel_path|replace('/', '-')|replace('.', '-') }}">
                         <span class="file-icon">📄</span> {{ file_item.name }}
                     </label>
                 </li>
                 {% endfor %}
-
                 {% if not directories and not files and parent_path is none %}
                  <li>(No files or directories found in root)</li>
                 {% elif not directories and not files %}
@@ -224,6 +223,7 @@
 
                 <h2>Selected Files (<span id="selected-count">0</span>)</h2>
                 <ul id="selected-files-list">
+                    <!-- Populated by JavaScript -->
                     <li>(No files selected yet)</li>
                 </ul>
 
@@ -246,7 +246,7 @@
             </div> <!-- End main-actions -->
 
              <!-- Output Area: Always include the structure now -->
-            <div class="output-area"> <!-- Removed style, using flexbox now -->
+            <div class="output-area">
                 <h2>Final Generated Output</h2>
                 <textarea id="final-output-textarea" readonly placeholder="Generated output will appear here after clicking the button above..."></textarea>
             </div>
@@ -255,6 +255,9 @@
     </div> <!-- End container -->
 
     <script>
+        // --- Constants ---
+        const STORAGE_KEY = 'oyrenPrompterSelectedFiles'; // Key for sessionStorage
+
         // --- Get DOM Elements ---
         const selectedFilesList = document.getElementById('selected-files-list');
         const selectedCountSpan = document.getElementById('selected-count');
@@ -263,25 +266,49 @@
         const togglePreviewBtn = document.getElementById('toggle-preview-btn');
         const previewLoadingEl = document.getElementById('preview-loading');
         const fileBrowserList = document.getElementById('file-browser-list');
-        const promptTextarea = document.getElementById('prompt-textarea'); // Get prompt textarea
-        const generateCopyBtn = document.getElementById('generate-copy-btn'); // Get the button
-        const finalOutputTextarea = document.getElementById('final-output-textarea'); // Get output textarea
-        const copyFeedbackEl = document.getElementById('copy-feedback'); // Get feedback span
+        const promptTextarea = document.getElementById('prompt-textarea');
+        const generateCopyBtn = document.getElementById('generate-copy-btn');
+        const finalOutputTextarea = document.getElementById('final-output-textarea');
+        const copyFeedbackEl = document.getElementById('copy-feedback');
 
-        let selectedFiles = []; // Keep track of selected file paths
+        let selectedFiles = []; // Global array holding the currently selected file paths
         let fetchTimeout; // For preview debouncing
 
-        // --- Function to update UI based on selection (updates preview) ---
-        function updateSelectionUI() {
-             selectedFiles = [];
-            document.querySelectorAll('.file-checkbox:checked').forEach(checkbox => {
-                selectedFiles.push(checkbox.value);
-            });
+        // --- Initialization ---
+        function initializeSelection() {
+            // Load selection from sessionStorage on page load
+            const storedSelection = sessionStorage.getItem(STORAGE_KEY);
+            if (storedSelection) {
+                try {
+                    selectedFiles = JSON.parse(storedSelection);
+                    if (!Array.isArray(selectedFiles)) { // Basic validation
+                        selectedFiles = [];
+                    }
+                } catch (e) {
+                    console.error("Error parsing stored selection:", e);
+                    selectedFiles = [];
+                }
+            } else {
+                selectedFiles = [];
+            }
 
-            // Update selected files list
+            // Update the display list (ul) and count
+            updateSelectionDisplay();
+            // Sync checkboxes currently visible on this page
+            syncVisibleCheckboxes();
+            // Clear any lingering feedback
+            clearCopyFeedback();
+        }
+
+        // --- Functions ---
+
+        // Updates the UL list and count span based on the selectedFiles array
+        function updateSelectionDisplay() {
             selectedFilesList.innerHTML = ''; // Clear previous list
             if (selectedFiles.length > 0) {
-                selectedFiles.forEach(filePath => {
+                // Sort for consistent display order (optional)
+                const sortedFiles = [...selectedFiles].sort();
+                sortedFiles.forEach(filePath => {
                     const li = document.createElement('li');
                     li.textContent = filePath;
                     selectedFilesList.appendChild(li);
@@ -291,7 +318,7 @@
             }
             selectedCountSpan.textContent = selectedFiles.length;
 
-            // Fetch and update preview content if preview is visible
+            // Fetch preview ONLY if the preview area is currently visible
             if (previewContentEl.style.display === 'block') {
                  fetchPreviewContent();
             } else {
@@ -302,185 +329,188 @@
             }
         }
 
-        // --- Function to fetch PREVIEW content from backend ---
-        function fetchPreviewContent() {
-             clearTimeout(fetchTimeout); // Clear previous timeout if any
-             previewLoadingEl.style.display = 'block'; // Show loading
-             previewErrorEl.textContent = ''; // Clear previous errors
-             previewContentEl.textContent = ''; // Clear old content
-
-             if (selectedFiles.length === 0) {
-                 previewLoadingEl.style.display = 'none';
-                 return;
+        // Saves the current selectedFiles array to sessionStorage
+        function saveSelectionToStorage() {
+             try {
+                sessionStorage.setItem(STORAGE_KEY, JSON.stringify(selectedFiles));
+             } catch (e) {
+                 console.error("Failed to save selection to sessionStorage:", e);
+                 // Maybe display a warning to the user?
+                 showCopyFeedback("Warning: Could not save file selection state.", "warning");
              }
+        }
 
-            // Debounce the fetch request slightly
+        // Checks/unchecks visible checkboxes based on the selectedFiles array
+        function syncVisibleCheckboxes() {
+            const checkboxes = fileBrowserList.querySelectorAll('.file-checkbox');
+            checkboxes.forEach(checkbox => {
+                // Check if the checkbox's value (path) is in our selected array
+                checkbox.checked = selectedFiles.includes(checkbox.value);
+            });
+        }
+
+        // Handle checkbox change event
+        function handleCheckboxChange(event) {
+            const checkbox = event.target;
+            const filePath = checkbox.value;
+            const isChecked = checkbox.checked;
+
+            if (isChecked) {
+                // Add to array if not already present (safety check)
+                if (!selectedFiles.includes(filePath)) {
+                    selectedFiles.push(filePath);
+                }
+            } else {
+                // Remove from array
+                selectedFiles = selectedFiles.filter(path => path !== filePath);
+            }
+
+            // Save the updated array to storage
+            saveSelectionToStorage();
+            // Update the visual list and count
+            updateSelectionDisplay();
+        }
+
+
+        // Fetches PREVIEW content (existing function - no changes needed)
+        function fetchPreviewContent() {
+            clearTimeout(fetchTimeout);
+            previewLoadingEl.style.display = 'block';
+            previewErrorEl.textContent = '';
+            previewContentEl.textContent = '';
+
+            if (selectedFiles.length === 0) {
+                previewLoadingEl.style.display = 'none';
+                return;
+            }
             fetchTimeout = setTimeout(() => {
                 fetch("{{ url_for('preview_content') }}", {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ selected_files: selectedFiles })
                 })
-                .then(response => {
-                    if (!response.ok) {
-                        // Try to get error message from response if possible
-                        return response.text().then(text => {
-                             throw new Error(`HTTP error! Status: ${response.status}, Message: ${text}`);
-                        });
-                    }
-                    return response.json();
-                 })
+                .then(response => response.ok ? response.json() : response.text().then(text => Promise.reject(`HTTP error! Status: ${response.status}, Message: ${text}`)))
                 .then(data => {
-                    previewLoadingEl.style.display = 'none'; // Hide loading
-                    if (data.preview_content) {
-                        previewContentEl.textContent = data.preview_content;
-                    } else {
-                        previewContentEl.textContent = '(No preview content retrieved or files were empty)';
-                    }
-                    if (data.errors && data.errors.length > 0) {
-                        previewErrorEl.textContent = 'Preview errors: ' + data.errors.join('; ');
-                    }
+                    previewLoadingEl.style.display = 'none';
+                    previewContentEl.textContent = data.preview_content || '(No preview content)';
+                    previewErrorEl.textContent = (data.errors && data.errors.length > 0) ? 'Preview errors: ' + data.errors.join('; ') : '';
                 })
                 .catch(error => {
-                    previewLoadingEl.style.display = 'none'; // Hide loading
+                    previewLoadingEl.style.display = 'none';
                     console.error('Error fetching preview:', error);
                     previewErrorEl.textContent = 'Error fetching preview: ' + error.message;
-                    previewContentEl.textContent = ''; // Clear content on error
                 });
-            }, 300); // Debounce delay in milliseconds
+            }, 300);
         }
 
-        // --- Function to handle Generate & Copy ---
+        // Handle Generate & Copy button click (existing function - no changes needed)
         async function handleGenerateAndCopy() {
             const currentPrompt = promptTextarea.value;
-            const currentSelectedFiles = selectedFiles; // Use the globally tracked list
+            const currentSelectedFiles = selectedFiles; // Use the stored global array
 
             if (currentSelectedFiles.length === 0 && !currentPrompt.trim()) {
-                showCopyFeedback("Nothing to generate (no files selected, no prompt).", "warning"); // Use warning class
+                showCopyFeedback("Nothing to generate (no files selected, no prompt).", "warning");
                 return;
             }
 
-            // Provide user feedback
             generateCopyBtn.disabled = true;
             generateCopyBtn.textContent = 'Generating...';
-            finalOutputTextarea.value = 'Generating...'; // Show in textarea too
-            clearCopyFeedback(); // Clear previous feedback
+            finalOutputTextarea.value = 'Generating...';
+            clearCopyFeedback();
 
             try {
                 const response = await fetch("{{ url_for('process_files') }}", {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        selected_files: currentSelectedFiles,
-                        prompt: currentPrompt
-                    })
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ selected_files: currentSelectedFiles, prompt: currentPrompt })
                 });
+                const data = await response.json();
+                if (!response.ok) { throw new Error(data.error || `Server error: ${response.status}`); }
 
-                const data = await response.json(); // Assume response is always JSON, even for errors if backend handles it
-
-                if (!response.ok) {
-                     // Use error message from JSON if available, otherwise generic error
-                     const errorMsg = data.error || `Server error: ${response.status}`;
-                     throw new Error(errorMsg);
-                }
-
-                // Display potential errors from backend file processing
                 let feedbackMsg = "";
+                let errorOutput = "";
                 if (data.errors && data.errors.length > 0) {
                     feedbackMsg = "Generated with errors: " + data.errors.join("; ");
-                    // Append errors to the main output for visibility
-                     finalOutputTextarea.value = data.final_output + "\n\n--- ERRORS ---\n" + data.errors.join("\n");
-                } else {
-                     finalOutputTextarea.value = data.final_output; // Display final output
+                    errorOutput = "\n\n--- ERRORS ---\n" + data.errors.join("\n");
                 }
+                finalOutputTextarea.value = data.final_output + errorOutput;
 
-
-                // Attempt to copy to clipboard using the Clipboard API
-                if (data.final_output) {
-                    if (!navigator.clipboard) {
-                         // Clipboard API not available (e.g., insecure context - http)
-                         showCopyFeedback(feedbackMsg ? feedbackMsg + " | Manual copy needed (HTTPS required for clipboard API)." : "Generated. Manual copy needed (HTTPS required for clipboard API).", "warning");
-                         finalOutputTextarea.select(); // Select text for easy manual copy
+                if (data.final_output || errorOutput) { // Copy even if there are only errors
+                     const textToCopy = finalOutputTextarea.value; // Copy exactly what's shown
+                     if (!navigator.clipboard) {
+                         showCopyFeedback(feedbackMsg ? feedbackMsg + " | Manual copy needed (HTTPS required)." : "Generated. Manual copy needed (HTTPS required).", "warning");
+                         finalOutputTextarea.select();
                     } else {
                          try {
-                             await navigator.clipboard.writeText(data.final_output);
+                             await navigator.clipboard.writeText(textToCopy);
                              showCopyFeedback(feedbackMsg ? feedbackMsg + " | Copied!" : "Copied to clipboard!", "success");
                          } catch (clipErr) {
                              console.error('Failed to copy automatically:', clipErr);
                              showCopyFeedback(feedbackMsg ? feedbackMsg + " | Auto-copy failed!" : "Generated, but failed to auto-copy.", "warning");
-                             finalOutputTextarea.select(); // Select text for easy manual copy
+                             finalOutputTextarea.select();
                          }
                     }
                 } else if (!feedbackMsg) {
-                     // No output and no specific errors reported by backend
                      showCopyFeedback("Generated empty output.", "warning");
                      finalOutputTextarea.value = '';
                 } else {
-                    // Only errors, no output
+                    // Only errors, no main output from backend
                     showCopyFeedback(feedbackMsg, "error");
-                    // Display only errors in the textarea
-                     finalOutputTextarea.value = "--- ERRORS ---\n" + data.errors.join("\n");
+                    // Already handled above by setting finalOutputTextarea.value
                 }
-
 
             } catch (error) {
                 console.error('Error generating/copying:', error);
                 showCopyFeedback(`Error: ${error.message}`, "error");
                 finalOutputTextarea.value = `Error generating output: ${error.message}`;
             } finally {
-                // Reset button state after a short delay
                 setTimeout(() => {
                     generateCopyBtn.disabled = false;
                     generateCopyBtn.textContent = 'Generate & Copy to Clipboard';
-                }, 1500); // Keep disabled slightly longer to read feedback
+                }, 1500);
             }
         }
 
-        // --- Helper functions for feedback ---
+        // Feedback helpers (existing functions - no changes needed)
         function showCopyFeedback(message, type = "success") {
             copyFeedbackEl.textContent = message;
-            copyFeedbackEl.className = type; // 'success', 'error', or 'warning'
-            copyFeedbackEl.style.opacity = '1'; // Make visible
-            // Fade out after a few seconds
-            setTimeout(clearCopyFeedback, 4000); // Hide after 4 seconds
+            copyFeedbackEl.className = type;
+            copyFeedbackEl.style.opacity = '1';
+            setTimeout(clearCopyFeedback, 4000);
         }
-
         function clearCopyFeedback() {
              copyFeedbackEl.textContent = '';
              copyFeedbackEl.className = '';
-             copyFeedbackEl.style.opacity = '0'; // Ensure it's visually hidden
+             copyFeedbackEl.style.opacity = '0';
         }
 
-
         // --- Event Listeners ---
+        // Use event delegation for checkbox changes
         if (fileBrowserList) {
              fileBrowserList.addEventListener('change', (event) => {
                  if (event.target.classList.contains('file-checkbox')) {
-                     updateSelectionUI();
+                     handleCheckboxChange(event); // Use the new handler
                  }
              });
         }
+        // Toggle preview visibility
         if (togglePreviewBtn) {
             togglePreviewBtn.addEventListener('click', () => {
                 const isHidden = previewContentEl.style.display === 'none' || previewContentEl.style.display === '';
                 previewContentEl.style.display = isHidden ? 'block' : 'none';
                 if (isHidden) {
-                    fetchPreviewContent(); // Fetch content when showing
+                    fetchPreviewContent(); // Fetch content only when showing
                 }
             });
         }
-        // Add listener to the generate/copy button
+        // Generate/Copy button click
         if (generateCopyBtn) {
             generateCopyBtn.addEventListener('click', handleGenerateAndCopy);
         }
 
-        // --- Initial UI setup ---
-        updateSelectionUI(); // Initialize selected files list/count
-        clearCopyFeedback(); // Ensure feedback is hidden on load
+        // --- Initial Page Load Setup ---
+        // Run initialization logic when the DOM is fully loaded
+        document.addEventListener('DOMContentLoaded', initializeSelection);
 
     </script>
 
