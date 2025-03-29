@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oyren File Prompter</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+            color: #212529;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .header {
+            background-color: #ffffff;
+            padding: 10px 20px;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap; /* Allow wrapping on small screens */
+        }
+        .header-brand {
+            display: flex;
+            align-items: center;
+        }
+        .header img {
+            height: 40px; /* Adjust logo size */
+            margin-right: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            color: #343a40;
+        }
+         .header a {
+            color: #007bff;
+            text-decoration: none;
+            font-size: 0.9em;
+         }
+         .header a:hover {
+            text-decoration: underline;
+         }
+        .container {
+            display: flex;
+            flex-grow: 1; /* Allow container to fill remaining height */
+            padding: 15px;
+            gap: 15px; /* Space between columns */
+        }
+        .column { flex: 1; background-color: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 15px; overflow-y: auto; }
+        .column-left { max-width: 40%; } /* Adjust width as needed */
+        .column-right { display: flex; flex-direction: column; }
+
+        h2 { color: #495057; border-bottom: 1px solid #e9ecef; padding-bottom: 5px; margin-top: 0; margin-bottom: 15px; font-size: 1.2em; }
+        ul { list-style: none; padding: 0; margin: 0; }
+        li { margin-bottom: 8px; }
+        a { text-decoration: none; color: #007bff; }
+        a:hover { text-decoration: underline; }
+        .file-item, .dir-item { display: flex; align-items: center; font-size: 0.95em; }
+        .file-item input[type="checkbox"] { margin-right: 10px; cursor: pointer; }
+        .dir-icon, .file-icon { margin-right: 8px; font-weight: normal; opacity: 0.8; }
+        .dir-icon { color: #fd7e14; } /* Orange for directory */
+        .file-icon { color: #6c757d; } /* Grey for file */
+        label { cursor: pointer; display: inline-flex; align-items: center; } /* Make label trigger checkbox */
+
+        textarea {
+            width: 100%; /* Use 100% of parent */
+            box-sizing: border-box; /* Include padding/border in width */
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+            font-size: 0.9em;
+            background-color: #f8f9fa; /* Light background for textareas */
+        }
+        button {
+            background-color: #007bff; color: white; padding: 10px 15px;
+            border: none; border-radius: 4px; cursor: pointer; font-size: 1em;
+            transition: background-color 0.2s ease;
+        }
+        button:hover { background-color: #0056b3; }
+        button.secondary { background-color: #6c757d; margin-bottom: 10px; font-size: 0.85em; padding: 5px 10px; }
+        button.secondary:hover { background-color: #5a6268; }
+
+        .path-nav { margin-bottom: 15px; font-size: 0.9em; color: #6c757d; background-color: #e9ecef; padding: 5px 10px; border-radius: 4px; }
+        .path-nav code { background-color: transparent; padding: 0; }
+
+        .error { color: #dc3545; font-weight: bold; margin-top: 10px; background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 8px; border-radius: 4px; font-size: 0.9em;}
+        .flash-messages { padding: 0 15px; } /* Container for flashed messages */
+        .flash-messages .error, .flash-messages .warning { margin-top: 10px; padding: 10px; border-radius: 4px; }
+        .flash-messages .warning { color: #856404; background-color: #fff3cd; border: 1px solid #ffeeba; }
+
+        #selected-files-list { font-size: 0.85em; margin-bottom: 15px; max-height: 150px; overflow-y: auto; background-color: #e9ecef; padding: 10px; border-radius: 4px;}
+        #selected-files-list li { margin-bottom: 4px; word-break: break-all; } /* Prevent long names breaking layout */
+
+        #preview-area { border: 1px solid #dee2e6; border-radius: 4px; margin-top: 10px; }
+        #preview-content {
+            max-height: 300px; /* Limit preview height */
+            overflow-y: auto;
+            display: none; /* Initially hidden */
+            padding: 10px;
+            background-color: #f8f9fa;
+            white-space: pre-wrap; /* Preserve whitespace and wrap */
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+            font-size: 0.85em;
+            border-top: 1px solid #dee2e6; /* Separator from button */
+        }
+         #preview-error {
+             color: #dc3545;
+             font-size: 0.8em;
+             padding: 5px 10px;
+         }
+         .loading-indicator {
+             font-style: italic;
+             color: #6c757d;
+             font-size: 0.9em;
+             padding: 10px;
+             display: none; /* Hidden by default */
+         }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-brand">
+            <!-- Use url_for to get the correct path to the static logo -->
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Oyren Logo">
+            <h1>Oyren File Prompter</h1>
+        </div>
+        <a href="https://oyren.dev" target="_blank" rel="noopener noreferrer">Visit Oyren.dev</a>
+    </div>
+
+    <!-- Flash Messages Area -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-messages">
+          {% for category, message in messages %}
+            <div class="{{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <div class="container">
+        <!-- Left Column: File Browser -->
+        <div class="column column-left">
+            <h2>Browse Files</h2>
+            <div class="path-nav">
+                Current: <code>/{{ current_relative_path if current_relative_path else '(Root)' }}</code>
+            </div>
+
+            <ul id="file-browser-list">
+                {% if parent_path is not none %}
+                <li class="dir-item"><a href="{{ url_for('browse', path=parent_path) }}">
+                    <span class="dir-icon">⬆️</span> .. [Up]</a>
+                </li>
+                {% endif %}
+
+                {% for dir_item in directories %}
+                <li class="dir-item">
+                    <a href="{{ url_for('browse', path=dir_item.rel_path) }}">
+                        <span class="dir-icon">📁</span> {{ dir_item.name }}
+                    </a>
+                </li>
+                {% endfor %}
+
+                {% for file_item in files %}
+                <li class="file-item">
+                    <input type="checkbox" name="selected_files" value="{{ file_item.rel_path }}" id="file-{{ loop.index }}" class="file-checkbox">
+                     <label for="file-{{ loop.index }}">
+                        <span class="file-icon">📄</span> {{ file_item.name }}
+                    </label>
+                </li>
+                {% endfor %}
+
+                {% if not directories and not files and parent_path is none %}
+                 <li>(No files or directories found in root)</li>
+                {% elif not directories and not files %}
+                 <li>(Directory is empty)</li>
+                {% endif %}
+            </ul>
+        </div>
+
+        <!-- Right Column: Actions & Output -->
+        <div class="column column-right">
+             <form action="{{ url_for('process_files') }}" method="post" id="main-form">
+                 <!-- Hidden field to remember the path for the POST request -->
+                 <input type="hidden" name="current_path" value="{{ current_relative_path }}">
+
+                <h2>Selected Files (<span id="selected-count">0</span>)</h2>
+                <ul id="selected-files-list">
+                    <li>(No files selected yet)</li>
+                </ul>
+
+                <h2>Content Preview</h2>
+                <div id="preview-area">
+                    <button type="button" id="toggle-preview-btn" class="secondary">Show/Hide Content Preview</button>
+                    <div class="loading-indicator" id="preview-loading">Loading preview...</div>
+                     <div id="preview-error"></div>
+                    <pre id="preview-content"></pre> <!-- Use <pre> for better formatting -->
+                </div>
+
+                <h2>Your Prompt</h2>
+                <textarea name="prompt" rows="5" placeholder="Enter your AI prompt here... (Optional)"></textarea>
+
+                <button type="submit">Generate Final Output</button>
+            </form>
+
+            {% if output %}
+            <div class="output-area" style="margin-top: 20px;"> <!-- Added margin -->
+                <h2>Final Output (Copy Below)</h2>
+                <textarea readonly rows="15">{{ output }}</textarea>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+    <script>
+        const fileCheckboxes = document.querySelectorAll('.file-checkbox');
+        const selectedFilesList = document.getElementById('selected-files-list');
+        const selectedCountSpan = document.getElementById('selected-count');
+        const previewContentEl = document.getElementById('preview-content');
+        const previewErrorEl = document.getElementById('preview-error');
+        const togglePreviewBtn = document.getElementById('toggle-preview-btn');
+        const previewLoadingEl = document.getElementById('preview-loading');
+        const fileBrowserList = document.getElementById('file-browser-list'); // Container for checkboxes
+
+        let selectedFiles = []; // Keep track of selected file paths
+
+        // --- Function to update UI based on selection ---
+        function updateSelectionUI() {
+            selectedFiles = [];
+            document.querySelectorAll('.file-checkbox:checked').forEach(checkbox => {
+                selectedFiles.push(checkbox.value);
+            });
+
+            // Update selected files list
+            selectedFilesList.innerHTML = ''; // Clear previous list
+            if (selectedFiles.length > 0) {
+                selectedFiles.forEach(filePath => {
+                    const li = document.createElement('li');
+                    li.textContent = filePath;
+                    selectedFilesList.appendChild(li);
+                });
+            } else {
+                selectedFilesList.innerHTML = '<li>(No files selected yet)</li>';
+            }
+            selectedCountSpan.textContent = selectedFiles.length;
+
+            // Fetch and update preview content
+            fetchPreviewContent();
+        }
+
+        // --- Function to fetch preview content from backend ---
+        let fetchTimeout; // For debouncing
+        function fetchPreviewContent() {
+             clearTimeout(fetchTimeout); // Clear previous timeout if any
+             previewLoadingEl.style.display = 'block'; // Show loading
+             previewErrorEl.textContent = ''; // Clear previous errors
+
+             if (selectedFiles.length === 0) {
+                 previewContentEl.textContent = ''; // Clear preview if nothing selected
+                 previewLoadingEl.style.display = 'none';
+                 // Optionally hide preview area if empty and it's visible
+                 // if (previewContentEl.style.display !== 'none') {
+                 //     previewContentEl.style.display = 'none';
+                 // }
+                 return;
+             }
+
+            // Debounce the fetch request slightly
+            fetchTimeout = setTimeout(() => {
+                fetch("{{ url_for('preview_content') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // Add CSRF token header if needed in future Flask versions/configs
+                    },
+                    body: JSON.stringify({ selected_files: selectedFiles })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    previewLoadingEl.style.display = 'none'; // Hide loading
+                    if (data.preview_content) {
+                        previewContentEl.textContent = data.preview_content;
+                    } else {
+                        previewContentEl.textContent = '(No content retrieved or files were empty)';
+                    }
+                    if (data.errors && data.errors.length > 0) {
+                        previewErrorEl.textContent = 'Preview errors: ' + data.errors.join('; ');
+                    }
+                })
+                .catch(error => {
+                    previewLoadingEl.style.display = 'none'; // Hide loading
+                    console.error('Error fetching preview:', error);
+                    previewErrorEl.textContent = 'Error fetching preview: ' + error.message;
+                    previewContentEl.textContent = ''; // Clear content on error
+                });
+            }, 300); // Debounce delay in milliseconds
+        }
+
+        // --- Event Listeners ---
+
+        // Use event delegation on the list container for checkboxes
+        if (fileBrowserList) {
+             fileBrowserList.addEventListener('change', (event) => {
+                 if (event.target.classList.contains('file-checkbox')) {
+                     updateSelectionUI();
+                 }
+             });
+        }
+
+
+        // Toggle preview visibility
+        if (togglePreviewBtn) {
+            togglePreviewBtn.addEventListener('click', () => {
+                const isHidden = previewContentEl.style.display === 'none' || previewContentEl.style.display === '';
+                previewContentEl.style.display = isHidden ? 'block' : 'none';
+                 // Fetch content only if showing and preview is empty? Or always keep it updated?
+                 // Let's assume it's updated by checkbox changes.
+            });
+        }
+
+        // --- Initial UI setup on page load ---
+        // Ensure initial count is correct (might be > 0 if page reloads with form data, unlikely here)
+        updateSelectionUI();
+
+    </script>
+
+</body>
+</html>

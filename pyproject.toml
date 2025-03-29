@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "oyren-prompter" # Choose a unique name for PyPI
+version = "0.1.0"
+authors = [
+    { name = "Vorashil Farzaliyev", email = "vorashil@oyren.dev" },
+]
+description = "A web-based tool to browse files, concatenate selection, and add a prompt."
+readme = "README.md" # Optional
+license = { file = "LICENSE" } # Optional
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License", # Choose your license
+    "Operating System :: OS Independent",
+    "Framework :: Flask",
+    "Environment :: Web Environment",
+    "Topic :: Utilities",
+]
+dependencies = [
+    "Flask>=2.0",
+    # pkg_resources is part of setuptools, usually available
+]
+
+[project.urls] # Optional
+"Homepage" = "https://github.com/oyren-dev/oyren-prompter"
+
+# ---- This is the crucial part for the command line ----
+[project.scripts]
+file-prompter = "file_prompter.app:run_server"
+# "command-name = package_name.module_name:function_name"
+
+[tool.setuptools.packages.find]
+where = ["src"]  # Look for packages in the src directory
+
+# ---- This ensures the 'templates' directory is included ----
+[tool.setuptools.package-data]
+"*" = ["templates/*", "static/*"]
+# More specific: file_prompter = ["templates/browser.html"]
