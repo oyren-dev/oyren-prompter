@@ -104,27 +104,6 @@ Once the prerequisites (Python, Git, pipx) are set up, you can run Oyren Prompte
 3. **Access:** Open your web browser to `http://127.0.0.1:5000`.
 4. **Stop:** Press `CTRL+C` in the terminal where `pipx run` is active.
 
-## Optional: macOS Installation via Homebrew
-
-If you are on macOS and prefer to install Oyren Prompter persistently using Homebrew (instead of using `pipx run` each
-time):
-
-1. **Add the Oyren Tap (if you haven't already):**
-   ```bash
-   brew tap oyren-dev/homebrew-oyren
-   ```
-
-2. **Install Oyren Prompter:**
-   ```bash
-   brew install oyren-prompter
-   ```
-3. **Run:**
-    * `cd /path/to/your/project/or/files`
-    * `oyren-prompter`
-4. **Update:**
-   ```bash
-   brew upgrade oyren-prompter
-   ```
 
 ## Usage
 
