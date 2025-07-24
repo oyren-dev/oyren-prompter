@@ -1,0 +1,52 @@
+{
+  "name": "oyren-prompter",
+  "version": "1.0.0",
+  "description": "A local web tool for browsing files, combining their contents, and preparing prompts for AI models",
+  "main": "index.js",
+  "bin": {
+    "oyren-prompter": "./docker-launcher.js"
+  },
+  "scripts": {
+    "start": "node docker-launcher.js",
+    "start:docker": "node docker-launcher.js",
+    "start:python": "node launcher.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "python-shell": "^5.0.0",
+    "chalk": "^4.1.2",
+    "commander": "^9.4.1"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "keywords": [
+    "file-browser",
+    "ai-prompts",
+    "code-analysis",
+    "local-tool",
+    "flask",
+    "python",
+    "web-interface"
+  ],
+  "author": "Vorashil Farzaliyev <vorashil@oyren.dev>",
+  "license": "GPL-3.0",
+  "homepage": "https://github.com/oyren-dev/oyren-prompter",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oyren-dev/oyren-prompter.git"
+  },
+  "bugs": {
+    "url": "https://github.com/oyren-dev/oyren-prompter/issues"
+  },
+  "files": [
+    "launcher.js",
+    "docker-launcher.js",
+    "Dockerfile",
+    "docker-compose.yml",
+    "src/",
+    "README.md",
+    "LICENSE"
+  ],
+  "preferGlobal": false
+}

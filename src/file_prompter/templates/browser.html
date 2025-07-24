@@ -4,170 +4,804 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="{{ url_for('static', filename='logo.png') }}" type="image/png">
-
     <title>Oyren File Prompter</title>
     <style>
-        /* ... (keep all existing CSS styles) ... */
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --bg-tertiary: #e9ecef;
+            --text-primary: #212529;
+            --text-secondary: #6c757d;
+            --text-muted: #adb5bd;
+            --border-color: #dee2e6;
+            --accent-color: #007bff;
+            --accent-hover: #0056b3;
+            --success-color: #28a745;
+            --success-hover: #218838;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --shadow: 0 2px 4px rgba(0,0,0,0.1);
+            --shadow-hover: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #1e1e1e;
+            --bg-secondary: #252526;
+            --bg-tertiary: #2d2d30;
+            --text-primary: #cccccc;
+            --text-secondary: #969696;
+            --text-muted: #6a6a6a;
+            --border-color: #3e3e42;
+            --accent-color: #0e639c;
+            --accent-hover: #1177bb;
+            --success-color: #0e7930;
+            --success-hover: #16843a;
+            --warning-color: #f9c74f;
+            --danger-color: #f94144;
+            --shadow: 0 2px 4px rgba(0,0,0,0.3);
+            --shadow-hover: 0 4px 8px rgba(0,0,0,0.4);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f8f9fa;
-            color: #212529;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
             display: flex;
             flex-direction: column;
             min-height: 100vh;
+            transition: all 0.2s ease;
         }
+
         .header {
-            background-color: #ffffff;
-            padding: 10px 20px;
-            border-bottom: 1px solid #dee2e6;
+            background-color: var(--bg-secondary);
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border-color);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            flex-wrap: wrap; /* Allow wrapping on small screens */
+            flex-wrap: wrap;
+            min-height: 60px;
         }
+
         .header-brand {
             display: flex;
             align-items: center;
+            gap: 12px;
         }
+
         .header img {
-            height: 40px; /* Adjust logo size */
-            margin-right: 15px;
+            height: 32px;
+            width: 32px;
+            border-radius: 6px;
         }
+
         .header h1 {
             margin: 0;
-            font-size: 1.5em;
-            color: #343a40;
+            font-size: 1.4em;
+            font-weight: 600;
+            color: var(--text-primary);
         }
-         .header a {
-            color: #007bff;
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .theme-toggle {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 6px 12px;
+            cursor: pointer;
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            transition: all 0.2s ease;
+        }
+
+        .theme-toggle:hover {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        .header a {
+            color: var(--accent-color);
             text-decoration: none;
             font-size: 0.9em;
-         }
-         .header a:hover {
-            text-decoration: underline;
-         }
+            font-weight: 500;
+        }
+
+        .header a:hover {
+            color: var(--accent-hover);
+        }
+
         .container {
             display: flex;
-            flex-grow: 1; /* Allow container to fill remaining height */
-            padding: 15px;
-            gap: 15px; /* Space between columns */
-            overflow: hidden; /* Prevent container itself from scrolling */
+            flex-grow: 1;
+            overflow: hidden;
         }
-        .column {
-            flex: 1;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            padding: 15px;
+
+        .sidebar {
+            width: 350px;
+            min-width: 300px;
+            background-color: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
             display: flex;
-            flex-direction: column; /* Make columns flex containers */
-            overflow-y: auto; /* Allow individual columns to scroll */
+            flex-direction: column;
+            overflow: hidden;
         }
-        .column-left { max-width: 40%; min-width: 250px;} /* Adjust width as needed */
-        .column-right { /* Right column already flex column */ }
 
-        h2 { color: #495057; border-bottom: 1px solid #e9ecef; padding-bottom: 5px; margin-top: 0; margin-bottom: 15px; font-size: 1.2em; flex-shrink: 0; /* Prevent shrinking */}
-        ul { list-style: none; padding: 0; margin: 0; flex-shrink: 0;}
-        li { margin-bottom: 8px; }
-        a { text-decoration: none; color: #007bff; }
-        a:hover { text-decoration: underline; }
-        .file-item, .dir-item { display: flex; align-items: center; font-size: 0.95em; }
-        .file-item input[type="checkbox"] { margin-right: 10px; cursor: pointer; }
-        .dir-icon, .file-icon { margin-right: 8px; font-weight: normal; opacity: 0.8; }
-        .dir-icon { color: #fd7e14; } /* Orange for directory */
-        .file-icon { color: #6c757d; } /* Grey for file */
-        label { cursor: pointer; display: inline-flex; align-items: center; } /* Make label trigger checkbox */
-
-        textarea {
-            width: 100%; /* Use 100% of parent */
-            box-sizing: border-box; /* Include padding/border in width */
-            margin-bottom: 15px;
-            padding: 10px;
-            border: 1px solid #ced4da;
-            border-radius: 4px;
-            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
-            font-size: 0.9em;
-            background-color: #f8f9fa; /* Light background for textareas */
-            flex-shrink: 0; /* Prevent shrinking */
+        .main-content {
+            flex: 1;
+            background-color: var(--bg-primary);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
-        #final-output-textarea { flex-grow: 1; /* Allow output textarea to grow */ }
 
-        button {
-            background-color: #007bff; color: white; padding: 10px 15px;
-            border: none; border-radius: 4px; cursor: pointer; font-size: 1em;
-            transition: background-color 0.2s ease;
-            flex-shrink: 0; /* Prevent shrinking */
-        }
-        button:hover:not(:disabled) { background-color: #0056b3; }
-        button:disabled { background-color: #6c757d; cursor: not-allowed; }
-
-        button.secondary { background-color: #6c757d; margin-bottom: 10px; font-size: 0.85em; padding: 5px 10px; }
-        button.secondary:hover:not(:disabled) { background-color: #5a6268; }
-
-        .path-nav { margin-bottom: 15px; font-size: 0.9em; color: #6c757d; background-color: #e9ecef; padding: 5px 10px; border-radius: 4px; flex-shrink: 0;}
-        .path-nav code { background-color: transparent; padding: 0; }
-
-        .error { color: #dc3545; font-weight: bold; margin-top: 10px; background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 8px; border-radius: 4px; font-size: 0.9em;}
-        .flash-messages { padding: 0 15px; flex-shrink: 0;} /* Container for flashed messages */
-        .flash-messages .error, .flash-messages .warning { margin-top: 10px; padding: 10px; border-radius: 4px; }
-        .flash-messages .warning { color: #856404; background-color: #fff3cd; border: 1px solid #ffeeba; }
-
-        #selected-files-list { font-size: 0.85em; margin-bottom: 15px; max-height: 150px; overflow-y: auto; background-color: #e9ecef; padding: 10px; border-radius: 4px; flex-shrink: 0;}
-        #selected-files-list li { margin-bottom: 4px; word-break: break-all; } /* Prevent long names breaking layout */
-
-        #preview-area { border: 1px solid #dee2e6; border-radius: 4px; margin-top: 10px; flex-shrink: 0;}
-        #preview-content {
-            max-height: 200px; /* Limit preview height */
+        .panel {
+            padding: 20px;
             overflow-y: auto;
-            display: none; /* Initially hidden */
-            padding: 10px;
-            background-color: #f8f9fa;
-            white-space: pre-wrap; /* Preserve whitespace and wrap */
-            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
-            font-size: 0.85em;
-            border-top: 1px solid #dee2e6; /* Separator from button */
         }
-         #preview-error {
-             color: #dc3545;
-             font-size: 0.8em;
-             padding: 5px 10px;
-         }
-         .loading-indicator {
-             font-style: italic;
-             color: #6c757d;
-             font-size: 0.9em;
-             padding: 10px;
-             display: none; /* Hidden by default */
-         }
-        #copy-feedback {
-            display: inline-block;
-            margin-left: 15px;
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-size: 0.9em;
-            font-weight: bold;
-            opacity: 0; /* Hidden initially */
-            transition: opacity 0.5s ease-out;
-            vertical-align: middle; /* Align with button */
-        }
-        #copy-feedback.success { background-color: #d4edda; color: #155724; opacity: 1; }
-        #copy-feedback.error { background-color: #f8d7da; color: #721c24; opacity: 1; }
-        #copy-feedback.warning { background-color: #fff3cd; color: #856404; opacity: 1; }
 
-        #main-actions { flex-shrink: 0; } /* Prevent actions area from shrinking */
-        .output-area { display: flex; flex-direction: column; flex-grow: 1; margin-top: 20px;} /* Allow output area to grow */
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .panel-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .path-nav {
+            background-color: var(--bg-tertiary);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Consolas', monospace;
+        }
+
+        .file-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .file-item, .dir-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+            border-radius: 4px;
+            transition: background-color 0.15s ease;
+        }
+
+        .file-item:hover, .dir-item:hover {
+            background-color: var(--bg-tertiary);
+            padding-left: 8px;
+            padding-right: 8px;
+            margin-left: -8px;
+            margin-right: -8px;
+        }
+
+        .file-item input[type="checkbox"], .dir-item input[type="checkbox"] {
+            margin-right: 10px;
+            cursor: pointer;
+            width: 16px;
+            height: 16px;
+        }
+
+        .file-icon, .dir-icon {
+            margin-right: 8px;
+            font-size: 16px;
+            width: 20px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .dir-icon {
+            color: #fd7e14;
+        }
+
+        .file-icon {
+            color: var(--text-muted);
+        }
+
+        .file-item label, .dir-item label {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            flex: 1;
+            font-size: 0.9em;
+            color: var(--text-primary);
+            min-width: 0; /* Allow text to shrink */
+        }
+
+        .file-name, .dir-name {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .dir-item {
+            justify-content: space-between;
+        }
+
+        .dir-browse-link {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-size: 0.8em;
+            padding: 2px 6px;
+            border-radius: 3px;
+            opacity: 0.7;
+            transition: opacity 0.2s ease;
+            flex-shrink: 0;
+            margin-left: 8px;
+        }
+
+        .dir-browse-link:hover {
+            opacity: 1;
+            background-color: var(--bg-tertiary);
+        }
+
+        .selected-files {
+            background-color: var(--bg-tertiary);
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 20px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .selected-files-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .selected-files-list li {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            padding: 2px 0;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Consolas', monospace;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        textarea, select {
+            width: 100%;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 12px;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Consolas', monospace;
+            font-size: 0.9em;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            transition: border-color 0.2s ease;
+            resize: vertical;
+        }
+
+        textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+        }
+
+        .btn {
+            background-color: var(--accent-color);
+            color: white;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover:not(:disabled) {
+            background-color: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .btn:disabled {
+            background-color: var(--text-muted);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+        }
+
+        .btn-success:hover:not(:disabled) {
+            background-color: var(--success-hover);
+        }
+
+        .btn-secondary {
+            background-color: var(--text-secondary);
+            font-size: 0.85em;
+            padding: 6px 12px;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background-color: var(--text-primary);
+        }
+
+        .preview-toggle {
+            margin-bottom: 12px;
+        }
+
+        .preview-content {
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background-color: var(--bg-secondary);
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .preview-content pre {
+            margin: 0;
+            padding: 12px;
+            font-size: 0.85em;
+            white-space: pre-wrap;
+            color: var(--text-primary);
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Consolas', monospace;
+        }
+
+        .feedback {
+            display: inline-flex;
+            align-items: center;
+            margin-left: 12px;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: 500;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .feedback.success {
+            background-color: #d4edda;
+            color: #155724;
+            opacity: 1;
+        }
+
+        .feedback.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            opacity: 1;
+        }
+
+        .feedback.warning {
+            background-color: #fff3cd;
+            color: #856404;
+            opacity: 1;
+        }
+
+        .ai-integration {
+            background-color: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 20px;
+        }
+
+        .ai-section-title {
+            font-size: 1em;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        .chatgpt-controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+            align-items: center;
+        }
+
+        .model-select {
+            flex: 1;
+            max-width: 200px;
+        }
+
+        .other-ai-note {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            font-style: italic;
+            margin-top: 8px;
+            padding: 8px 12px;
+            background-color: var(--bg-tertiary);
+            border-radius: 4px;
+            border-left: 3px solid var(--accent-color);
+        }
+
+        .loading {
+            font-style: italic;
+            color: var(--text-secondary);
+        }
+
+        .flash-messages {
+            padding: 12px 20px;
+        }
+
+        .flash-messages .error,
+        .flash-messages .warning {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+
+        .flash-messages .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .flash-messages .warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+
+        /* Scrollbar styling for dark mode */
+        [data-theme="dark"] ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        [data-theme="dark"] ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        [data-theme="dark"] ::-webkit-scrollbar-thumb {
+            background: var(--text-muted);
+            border-radius: 4px;
+        }
+
+        [data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+
+        /* Bulk Selection Controls */
+        .bulk-selection-controls {
+            background-color: var(--bg-tertiary);
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 16px;
+            border: 1px solid var(--border-color);
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .control-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .btn-small {
+            background-color: var(--accent-color);
+            color: white;
+            padding: 4px 8px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .btn-small:hover {
+            background-color: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        .extension-select {
+            flex: 1;
+            max-width: 120px;
+            min-width: 80px;
+            padding: 4px 8px;
+            font-size: 0.8em;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.8em;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        .checkbox-label input[type="checkbox"] {
+            margin: 0;
+            width: 14px;
+            height: 14px;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.2s ease;
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: var(--bg-primary);
+            border-radius: 8px;
+            box-shadow: var(--shadow-hover);
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow: hidden;
+            animation: slideIn 0.3s ease;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            background-color: var(--bg-secondary);
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            color: var(--text-primary);
+            font-size: 1.2em;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .close-modal:hover {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            max-height: calc(80vh - 80px);
+        }
+
+        .search-form {
+            margin-bottom: 20px;
+        }
+
+        .search-form input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 0.9em;
+            margin-bottom: 12px;
+        }
+
+        .search-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .search-options select {
+            flex: 1;
+            min-width: 150px;
+            max-width: 200px;
+            height: 35px;
+        }
+
+        .search-results {
+            border-top: 1px solid var(--border-color);
+            padding-top: 16px;
+        }
+
+        .search-status {
+            color: var(--text-secondary);
+            font-style: italic;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .results-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .search-result-item {
+            background-color: var(--bg-secondary);
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 12px;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .search-result-item:hover {
+            background-color: var(--bg-tertiary);
+            border-color: var(--accent-color);
+        }
+
+        .search-result-file {
+            font-weight: 600;
+            color: var(--accent-color);
+            font-size: 0.9em;
+            margin-bottom: 8px;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Consolas', monospace;
+        }
+
+        .search-result-matches {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .search-result-match {
+            padding: 4px 0;
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            border-left: 3px solid var(--accent-color);
+            padding-left: 8px;
+            margin: 4px 0;
+            background-color: var(--bg-primary);
+            border-radius: 0 4px 4px 0;
+        }
+
+        .search-result-line {
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .search-match-highlight {
+            background-color: var(--warning-color);
+            color: var(--text-primary);
+            padding: 1px 3px;
+            border-radius: 2px;
+            font-weight: 600;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { 
+                opacity: 0;
+                transform: translateY(-20px) scale(0.95);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                min-width: unset;
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+            }
+            
+            .chatgpt-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .model-select {
+                max-width: none;
+            }
+
+            .bulk-selection-controls {
+                padding: 8px;
+            }
+
+            .control-group {
+                flex-wrap: wrap;
+            }
+
+            .extension-select {
+                min-width: 100px;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 10px;
+            }
+
+            .search-options {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-options select {
+                max-width: none;
+            }
+        }
     </style>
 </head>
 <body>
-    <!-- ... (keep header and flash messages area) ... -->
     <div class="header">
         <div class="header-brand">
             <img src="{{ url_for('static', filename='logo.png') }}" alt="Oyren Logo">
             <h1>Oyren File Prompter</h1>
         </div>
-        <a href="https://oyren.dev" target="_blank" rel="noopener noreferrer">Visit Oyren.dev</a>
+        <div class="header-actions">
+            <button class="theme-toggle" onclick="toggleTheme()">🌓 Theme</button>
+            <a href="https://oyren.dev" target="_blank" rel="noopener noreferrer">Visit Oyren.dev</a>
+        </div>
     </div>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -181,90 +815,207 @@
     {% endwith %}
 
     <div class="container">
-        <!-- Left Column: File Browser -->
-        <div class="column column-left">
-            <h2>Browse Files</h2>
-            <div class="path-nav">
-                Current: <code>/{{ current_relative_path if current_relative_path else '(Root)' }}</code>
-            </div>
+        <!-- Sidebar: File Browser -->
+        <div class="sidebar">
+            <div class="panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">File Explorer</h2>
+                    <button class="btn btn-secondary" id="search-files-btn" title="Search files (Shift+Space)">🔍</button>
+                </div>
+                
+                <!-- Bulk Selection Controls -->
+                <div class="bulk-selection-controls">
+                    <div class="control-group">
+                        <button class="btn-small" id="select-all-visible" title="Select all visible files (Ctrl+A)">All Visible</button>
+                        <button class="btn-small" id="clear-selection" title="Clear all selections">Clear All</button>
+                    </div>
+                    <div class="control-group">
+                        <select id="extension-filter" class="extension-select">
+                            <option value="">Select by extension...</option>
+                        </select>
+                        <button class="btn-small" id="select-by-extension">Select</button>
+                    </div>
+                    <div class="control-group">
+                        <button class="btn-small" id="select-current-dir" title="Select all files in current directory">Current Dir</button>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="recursive-selection"> Recursive
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="path-nav">
+                    {{ current_relative_path if current_relative_path else 'root' }}
+                </div>
 
-            <ul id="file-browser-list">
-                <!-- Rendered by Flask based on current path -->
-                {% if parent_path is not none %}
-                <li class="dir-item"><a href="{{ url_for('browse', path=parent_path) }}">
-                    <span class="dir-icon">⬆️</span> .. [Up]</a>
-                </li>
-                {% endif %}
-                {% for dir_item in directories %}
-                <li class="dir-item">
-                    <a href="{{ url_for('browse', path=dir_item.rel_path) }}">
-                        <span class="dir-icon">📁</span> {{ dir_item.name }}
-                    </a>
-                </li>
-                {% endfor %}
-                {% for file_item in files %}
-                <li class="file-item">
-                    <!-- Checkbox value is the relative path -->
-                    <input type="checkbox" name="selected_files" value="{{ file_item.rel_path }}" id="cb-{{ file_item.rel_path|replace('/', '-')|replace('.', '-') }}" class="file-checkbox">
-                     <label for="cb-{{ file_item.rel_path|replace('/', '-')|replace('.', '-') }}">
-                        <span class="file-icon">📄</span> {{ file_item.name }}
-                    </label>
-                </li>
-                {% endfor %}
-                {% if not directories and not files and parent_path is none %}
-                 <li>(No files or directories found in root)</li>
-                {% elif not directories and not files %}
-                 <li>(Directory is empty)</li>
-                {% endif %}
-            </ul>
+                <ul class="file-list" id="file-browser-list">
+                    {% if parent_path is not none %}
+                    <li class="dir-item">
+                        <input type="checkbox" style="visibility: hidden;" disabled>
+                        <span class="dir-icon">⬆️</span>
+                        <a href="{{ url_for('browse', path=parent_path) }}" style="flex: 1; color: var(--accent-color); text-decoration: none;">
+                            <span class="dir-name">.. (Parent Directory)</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for dir_item in directories %}
+                    <li class="dir-item">
+                        <input type="checkbox" name="selected_directories" value="{{ dir_item.rel_path }}" 
+                               id="dir-cb-{{ dir_item.rel_path|replace('/', '-')|replace('.', '-') }}" class="dir-checkbox">
+                        <label for="dir-cb-{{ dir_item.rel_path|replace('/', '-')|replace('.', '-') }}">
+                            <span class="dir-icon">📁</span>
+                            <span class="dir-name">{{ dir_item.name }}</span>
+                        </label>
+                        <a href="{{ url_for('browse', path=dir_item.rel_path) }}" class="dir-browse-link">Browse →</a>
+                    </li>
+                    {% endfor %}
+                    
+                    {% for file_item in files %}
+                    <li class="file-item">
+                        <input type="checkbox" name="selected_files" value="{{ file_item.rel_path }}" 
+                               id="cb-{{ file_item.rel_path|replace('/', '-')|replace('.', '-') }}" class="file-checkbox">
+                        <label for="cb-{{ file_item.rel_path|replace('/', '-')|replace('.', '-') }}">
+                            <span class="file-icon">📄</span>
+                            <span class="file-name">{{ file_item.name }}</span>
+                        </label>
+                    </li>
+                    {% endfor %}
+                    
+                    {% if not directories and not files and parent_path is none %}
+                     <li style="color: var(--text-muted); font-style: italic; padding: 20px 0; text-align: center;">
+                         No files or directories found
+                     </li>
+                    {% elif not directories and not files %}
+                     <li style="color: var(--text-muted); font-style: italic; padding: 20px 0; text-align: center;">
+                         Directory is empty
+                     </li>
+                    {% endif %}
+                </ul>
+            </div>
         </div>
 
-        <!-- Right Column: Actions & Output -->
-        <div class="column column-right">
-             <div id="main-actions"> <!-- Actions Container -->
-
-                <h2>Selected Files (<span id="selected-count">0</span>)</h2>
-                <ul id="selected-files-list">
-                    <!-- Populated by JavaScript -->
-                    <li>(No files selected yet)</li>
-                </ul>
-
-                <h2>Content Preview</h2>
-                <div id="preview-area">
-                    <button type="button" id="toggle-preview-btn" class="secondary">Show/Hide Content Preview</button>
-                    <div class="loading-indicator" id="preview-loading">Loading preview...</div>
-                     <div id="preview-error"></div>
-                    <pre id="preview-content"></pre> <!-- Use <pre> for better formatting -->
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="panel">
+                <!-- Selected Files -->
+                <div class="form-group">
+                    <label class="form-label">Selected Files (<span id="selected-count">0</span>)</label>
+                    <div class="selected-files">
+                        <ul class="selected-files-list" id="selected-files-list">
+                            <li style="color: var(--text-muted);">No files selected yet</li>
+                        </ul>
+                    </div>
                 </div>
 
-                <h2>Your Prompt</h2>
-                <textarea id="prompt-textarea" name="prompt" rows="5" placeholder="Enter your AI prompt here... (Optional)"></textarea>
-
-                <!-- Generate & Copy Button + Feedback Area -->
-                <div>
-                    <button type="button" id="generate-copy-btn">Generate & Copy to Clipboard</button>
-                    <span id="copy-feedback"></span>
+                <!-- Content Preview -->
+                <div class="form-group">
+                    <label class="form-label">Content Preview</label>
+                    <div class="preview-toggle">
+                        <button type="button" id="toggle-preview-btn" class="btn btn-secondary">Show Preview</button>
+                    </div>
+                    <div class="preview-content" id="preview-content-area">
+                        <div class="loading" id="preview-loading" style="display: none; padding: 12px;">Loading preview...</div>
+                        <div id="preview-error" style="color: var(--danger-color); font-size: 0.85em; padding: 12px;"></div>
+                        <pre id="preview-content"></pre>
+                    </div>
                 </div>
-            </div> <!-- End main-actions -->
 
-             <!-- Output Area: Always include the structure now -->
-            <div class="output-area">
-                <h2>Final Generated Output</h2>
-                <textarea id="final-output-textarea" readonly placeholder="Generated output will appear here after clicking the button above..."></textarea>
+                <!-- Prompt Input -->
+                <div class="form-group">
+                    <label class="form-label" for="prompt-textarea">Your Prompt (Optional)</label>
+                    <textarea id="prompt-textarea" rows="4" placeholder="Enter your AI prompt here..."></textarea>
+                </div>
+
+                <!-- Generate & Copy -->
+                <div class="form-group">
+                    <button type="button" id="generate-copy-btn" class="btn">Generate & Copy to Clipboard</button>
+                    <span id="copy-feedback" class="feedback"></span>
+                </div>
+
+                <!-- AI Integration -->
+                <div class="ai-integration">
+                    <h3 class="ai-section-title">🤖 AI Integration</h3>
+                    
+                    <div class="chatgpt-controls">
+                        <select id="chatgpt-model" class="model-select">
+                            <option value="gpt-4">GPT-4</option>
+                            <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                            <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                        </select>
+                        <button type="button" id="send-to-chatgpt" class="btn btn-success">Send to ChatGPT</button>
+                    </div>
+                    
+                    <div class="other-ai-note">
+                        💡 <strong>Using other AI services?</strong> Click "Generate & Copy to Clipboard" above, then paste the content into your favorite AI chat (Claude, Gemini, DeepSeek, etc.)
+                    </div>
+                </div>
+
+                <!-- Output Area -->
+                <div class="form-group" style="margin-top: 30px;">
+                    <label class="form-label" for="final-output-textarea">Generated Output</label>
+                    <textarea id="final-output-textarea" rows="12" readonly placeholder="Generated output will appear here..."></textarea>
+                </div>
             </div>
+        </div>
+    </div>
 
-        </div> <!-- End right column -->
-    </div> <!-- End container -->
+    <!-- Search Modal -->
+    <div id="search-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Search File Contents</h3>
+                <button class="close-modal" id="close-search-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="search-form">
+                    <div class="form-group">
+                        <input type="text" id="search-query" placeholder="Enter search query..." />
+                    </div>
+                    <div class="search-options">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="case-sensitive"> Case sensitive
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="use-regex"> Use regex
+                        </label>
+                        <select id="search-extensions" multiple>
+                            <option value="">All file types</option>
+                        </select>
+                    </div>
+                    <button class="btn" id="start-search">Search</button>
+                </div>
+                <div class="search-results" id="search-results">
+                    <div class="search-status" id="search-status">Enter a query to search file contents</div>
+                    <div class="results-list" id="results-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
-        // --- Constants ---
-        const STORAGE_KEY = 'oyrenPrompterSelectedFiles'; // Key for sessionStorage
+        // Theme management
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        }
 
-        // --- Get DOM Elements ---
+        // Load saved theme
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+
+        // Constants
+        const STORAGE_KEY = 'oyrenPrompterSelectedFiles';
+        const PROMPT_STORAGE_KEY = 'oyrenPrompterPrompt';
+        const DIRECTORIES_STORAGE_KEY = 'oyrenPrompterSelectedDirectories';
+
+        // DOM Elements
         const selectedFilesList = document.getElementById('selected-files-list');
         const selectedCountSpan = document.getElementById('selected-count');
         const previewContentEl = document.getElementById('preview-content');
         const previewErrorEl = document.getElementById('preview-error');
+        const previewContentArea = document.getElementById('preview-content-area');
         const togglePreviewBtn = document.getElementById('toggle-preview-btn');
         const previewLoadingEl = document.getElementById('preview-loading');
         const fileBrowserList = document.getElementById('file-browser-list');
@@ -272,43 +1023,60 @@
         const generateCopyBtn = document.getElementById('generate-copy-btn');
         const finalOutputTextarea = document.getElementById('final-output-textarea');
         const copyFeedbackEl = document.getElementById('copy-feedback');
+        const chatgptModelSelect = document.getElementById('chatgpt-model');
 
-        let selectedFiles = []; // Global array holding the currently selected file paths
-        let fetchTimeout; // For preview debouncing
+        let selectedFiles = [];
+        let selectedDirectories = [];
+        let fetchTimeout;
 
-        // --- Initialization ---
+        // Initialization
         function initializeSelection() {
-            // Load selection from sessionStorage on page load
+            // Load files from sessionStorage
             const storedSelection = sessionStorage.getItem(STORAGE_KEY);
             if (storedSelection) {
                 try {
                     selectedFiles = JSON.parse(storedSelection);
-                    if (!Array.isArray(selectedFiles)) { // Basic validation
-                        selectedFiles = [];
-                    }
+                    if (!Array.isArray(selectedFiles)) selectedFiles = [];
                 } catch (e) {
                     console.error("Error parsing stored selection:", e);
                     selectedFiles = [];
                 }
-            } else {
-                selectedFiles = [];
             }
 
-            // Update the display list (ul) and count
+            // Load directories from sessionStorage
+            const storedDirectories = sessionStorage.getItem(DIRECTORIES_STORAGE_KEY);
+            if (storedDirectories) {
+                try {
+                    selectedDirectories = JSON.parse(storedDirectories);
+                    if (!Array.isArray(selectedDirectories)) selectedDirectories = [];
+                } catch (e) {
+                    console.error("Error parsing stored directories:", e);
+                    selectedDirectories = [];
+                }
+            }
+
+            // Load prompt from sessionStorage
+            const storedPrompt = sessionStorage.getItem(PROMPT_STORAGE_KEY);
+            if (storedPrompt && promptTextarea) {
+                promptTextarea.value = storedPrompt;
+            }
+
             updateSelectionDisplay();
-            // Sync checkboxes currently visible on this page
             syncVisibleCheckboxes();
-            // Clear any lingering feedback
             clearCopyFeedback();
         }
 
-        // --- Functions ---
+        function savePromptToStorage() {
+            try {
+                sessionStorage.setItem(PROMPT_STORAGE_KEY, promptTextarea.value);
+            } catch (e) {
+                console.error("Failed to save prompt to sessionStorage:", e);
+            }
+        }
 
-        // Updates the UL list and count span based on the selectedFiles array
         function updateSelectionDisplay() {
-            selectedFilesList.innerHTML = ''; // Clear previous list
+            selectedFilesList.innerHTML = '';
             if (selectedFiles.length > 0) {
-                // Sort for consistent display order (optional)
                 const sortedFiles = [...selectedFiles].sort();
                 sortedFiles.forEach(filePath => {
                     const li = document.createElement('li');
@@ -316,65 +1084,68 @@
                     selectedFilesList.appendChild(li);
                 });
             } else {
-                selectedFilesList.innerHTML = '<li>(No files selected yet)</li>';
+                selectedFilesList.innerHTML = '<li style="color: var(--text-muted);">No files selected yet</li>';
             }
             selectedCountSpan.textContent = selectedFiles.length;
 
-            // Fetch preview ONLY if the preview area is currently visible
-            if (previewContentEl.style.display === 'block') {
-                 fetchPreviewContent();
+            if (previewContentArea.style.display === 'block') {
+                fetchPreviewContent();
             } else {
-                 // Clear preview content if hidden, but don't fetch
-                 previewContentEl.textContent = '';
-                 previewErrorEl.textContent = '';
-                 previewLoadingEl.style.display = 'none';
+                previewContentEl.textContent = '';
+                previewErrorEl.textContent = '';
+                previewLoadingEl.style.display = 'none';
             }
         }
 
-        // Saves the current selectedFiles array to sessionStorage
         function saveSelectionToStorage() {
-             try {
+            try {
                 sessionStorage.setItem(STORAGE_KEY, JSON.stringify(selectedFiles));
-             } catch (e) {
-                 console.error("Failed to save selection to sessionStorage:", e);
-                 // Maybe display a warning to the user?
-                 showCopyFeedback("Warning: Could not save file selection state.", "warning");
-             }
+                sessionStorage.setItem(DIRECTORIES_STORAGE_KEY, JSON.stringify(selectedDirectories));
+            } catch (e) {
+                console.error("Failed to save selection to sessionStorage:", e);
+                showCopyFeedback("Warning: Could not save file selection state.", "warning");
+            }
         }
 
-        // Checks/unchecks visible checkboxes based on the selectedFiles array
         function syncVisibleCheckboxes() {
             const checkboxes = fileBrowserList.querySelectorAll('.file-checkbox');
             checkboxes.forEach(checkbox => {
-                // Check if the checkbox's value (path) is in our selected array
                 checkbox.checked = selectedFiles.includes(checkbox.value);
+            });
+            
+            const dirCheckboxes = fileBrowserList.querySelectorAll('.dir-checkbox');
+            dirCheckboxes.forEach(checkbox => {
+                checkbox.checked = selectedDirectories.includes(checkbox.value);
             });
         }
 
-        // Handle checkbox change event
         function handleCheckboxChange(event) {
             const checkbox = event.target;
-            const filePath = checkbox.value;
+            const itemPath = checkbox.value;
             const isChecked = checkbox.checked;
 
-            if (isChecked) {
-                // Add to array if not already present (safety check)
-                if (!selectedFiles.includes(filePath)) {
-                    selectedFiles.push(filePath);
+            if (checkbox.classList.contains('file-checkbox')) {
+                if (isChecked) {
+                    if (!selectedFiles.includes(itemPath)) {
+                        selectedFiles.push(itemPath);
+                    }
+                } else {
+                    selectedFiles = selectedFiles.filter(path => path !== itemPath);
                 }
-            } else {
-                // Remove from array
-                selectedFiles = selectedFiles.filter(path => path !== filePath);
+                saveSelectionToStorage();
+                updateSelectionDisplay();
+            } else if (checkbox.classList.contains('dir-checkbox')) {
+                if (isChecked) {
+                    if (!selectedDirectories.includes(itemPath)) {
+                        selectedDirectories.push(itemPath);
+                    }
+                } else {
+                    selectedDirectories = selectedDirectories.filter(path => path !== itemPath);
+                }
+                saveSelectionToStorage();
             }
-
-            // Save the updated array to storage
-            saveSelectionToStorage();
-            // Update the visual list and count
-            updateSelectionDisplay();
         }
 
-
-        // Fetches PREVIEW content (existing function - no changes needed)
         function fetchPreviewContent() {
             clearTimeout(fetchTimeout);
             previewLoadingEl.style.display = 'block';
@@ -385,6 +1156,7 @@
                 previewLoadingEl.style.display = 'none';
                 return;
             }
+
             fetchTimeout = setTimeout(() => {
                 fetch("{{ url_for('preview_content') }}", {
                     method: 'POST',
@@ -405,13 +1177,13 @@
             }, 300);
         }
 
-        // Handle Generate & Copy button click (existing function - no changes needed)
         async function handleGenerateAndCopy() {
             const currentPrompt = promptTextarea.value;
-            const currentSelectedFiles = selectedFiles; // Use the stored global array
+            const currentSelectedFiles = selectedFiles;
+            const currentSelectedDirectories = selectedDirectories;
 
-            if (currentSelectedFiles.length === 0 && !currentPrompt.trim()) {
-                showCopyFeedback("Nothing to generate (no files selected, no prompt).", "warning");
+            if (currentSelectedFiles.length === 0 && currentSelectedDirectories.length === 0 && !currentPrompt.trim()) {
+                showCopyFeedback("Nothing to generate (no files/directories selected, no prompt).", "warning");
                 return;
             }
 
@@ -424,7 +1196,11 @@
                 const response = await fetch("{{ url_for('process_files') }}", {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ selected_files: currentSelectedFiles, prompt: currentPrompt })
+                    body: JSON.stringify({ 
+                        selected_files: currentSelectedFiles, 
+                        selected_directories: currentSelectedDirectories,
+                        prompt: currentPrompt 
+                    })
                 });
                 const data = await response.json();
                 if (!response.ok) { throw new Error(data.error || `Server error: ${response.status}`); }
@@ -437,8 +1213,8 @@
                 }
                 finalOutputTextarea.value = data.final_output + errorOutput;
 
-                if (data.final_output || errorOutput) { // Copy even if there are only errors
-                     const textToCopy = finalOutputTextarea.value; // Copy exactly what's shown
+                if (data.final_output || errorOutput) {
+                     const textToCopy = finalOutputTextarea.value;
                      if (!navigator.clipboard) {
                          showCopyFeedback(feedbackMsg ? feedbackMsg + " | Manual copy needed (HTTPS required)." : "Generated. Manual copy needed (HTTPS required).", "warning");
                          finalOutputTextarea.select();
@@ -456,9 +1232,7 @@
                      showCopyFeedback("Generated empty output.", "warning");
                      finalOutputTextarea.value = '';
                 } else {
-                    // Only errors, no main output from backend
                     showCopyFeedback(feedbackMsg, "error");
-                    // Already handled above by setting finalOutputTextarea.value
                 }
 
             } catch (error) {
@@ -473,48 +1247,436 @@
             }
         }
 
-        // Feedback helpers (existing functions - no changes needed)
+        async function sendToChatGPT() {
+            const currentPrompt = promptTextarea.value;
+            const currentSelectedFiles = selectedFiles;
+            const currentSelectedDirectories = selectedDirectories;
+            const selectedModel = chatgptModelSelect.value;
+
+            if (currentSelectedFiles.length === 0 && currentSelectedDirectories.length === 0 && !currentPrompt.trim()) {
+                showCopyFeedback("Nothing to send (no files/directories selected, no prompt).", "warning");
+                return;
+            }
+
+            try {
+                const response = await fetch("{{ url_for('process_files') }}", {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ 
+                        selected_files: currentSelectedFiles, 
+                        selected_directories: currentSelectedDirectories,
+                        prompt: currentPrompt 
+                    })
+                });
+                const data = await response.json();
+                if (!response.ok) { 
+                    throw new Error(data.error || `Server error: ${response.status}`); 
+                }
+
+                let content = data.final_output;
+                if (data.errors && data.errors.length > 0) {
+                    content += "\n\n--- ERRORS ---\n" + data.errors.join("\n");
+                }
+
+                if (navigator.clipboard) {
+                    await navigator.clipboard.writeText(content);
+                    showCopyFeedback(`Content copied! Opening ChatGPT (${selectedModel})...`, "success");
+                } else {
+                    showCopyFeedback(`Manual copy needed! Opening ChatGPT...`, "warning");
+                }
+
+                const encodedContent = encodeURIComponent(content);
+                const url = `https://chatgpt.com/?q=${encodedContent}&temporary-chat=true&model=${selectedModel}`;
+                window.open(url, '_blank');
+
+            } catch (error) {
+                console.error(`Error sending to ChatGPT:`, error);
+                showCopyFeedback(`Error preparing content for ChatGPT: ${error.message}`, "error");
+            }
+        }
+
         function showCopyFeedback(message, type = "success") {
             copyFeedbackEl.textContent = message;
-            copyFeedbackEl.className = type;
+            copyFeedbackEl.className = `feedback ${type}`;
             copyFeedbackEl.style.opacity = '1';
             setTimeout(clearCopyFeedback, 4000);
         }
+
         function clearCopyFeedback() {
              copyFeedbackEl.textContent = '';
-             copyFeedbackEl.className = '';
+             copyFeedbackEl.className = 'feedback';
              copyFeedbackEl.style.opacity = '0';
         }
 
-        // --- Event Listeners ---
-        // Use event delegation for checkbox changes
+        // Event Listeners
         if (fileBrowserList) {
              fileBrowserList.addEventListener('change', (event) => {
-                 if (event.target.classList.contains('file-checkbox')) {
-                     handleCheckboxChange(event); // Use the new handler
+                 if (event.target.classList.contains('file-checkbox') || event.target.classList.contains('dir-checkbox')) {
+                     handleCheckboxChange(event);
                  }
              });
         }
-        // Toggle preview visibility
+        
+        if (promptTextarea) {
+            promptTextarea.addEventListener('input', savePromptToStorage);
+            promptTextarea.addEventListener('blur', savePromptToStorage);
+        }
+        
         if (togglePreviewBtn) {
             togglePreviewBtn.addEventListener('click', () => {
-                const isHidden = previewContentEl.style.display === 'none' || previewContentEl.style.display === '';
-                previewContentEl.style.display = isHidden ? 'block' : 'none';
+                const isHidden = previewContentArea.style.display === 'none' || previewContentArea.style.display === '';
+                previewContentArea.style.display = isHidden ? 'block' : 'none';
+                togglePreviewBtn.textContent = isHidden ? 'Hide Preview' : 'Show Preview';
                 if (isHidden) {
-                    fetchPreviewContent(); // Fetch content only when showing
+                    fetchPreviewContent();
                 }
             });
         }
-        // Generate/Copy button click
+
         if (generateCopyBtn) {
             generateCopyBtn.addEventListener('click', handleGenerateAndCopy);
         }
 
-        // --- Initial Page Load Setup ---
-        // Run initialization logic when the DOM is fully loaded
-        document.addEventListener('DOMContentLoaded', initializeSelection);
+        document.getElementById('send-to-chatgpt')?.addEventListener('click', sendToChatGPT);
 
+        // Bulk Selection Functions
+        async function loadAvailableExtensions() {
+            try {
+                const currentPath = '{{ current_relative_path }}';
+                const response = await fetch(`{{ url_for('available_extensions') }}?path=${encodeURIComponent(currentPath)}&recursive=true`);
+                const data = await response.json();
+                
+                const extensionSelect = document.getElementById('extension-filter');
+                const searchExtensionsSelect = document.getElementById('search-extensions');
+                
+                // Clear existing options (except first)
+                extensionSelect.innerHTML = '<option value="">Select by extension...</option>';
+                searchExtensionsSelect.innerHTML = '<option value="">All file types</option>';
+                
+                if (data.extensions && data.extensions.length > 0) {
+                    data.extensions.forEach(ext => {
+                        const option1 = new Option(ext, ext);
+                        const option2 = new Option(ext, ext);
+                        extensionSelect.appendChild(option1);
+                        searchExtensionsSelect.appendChild(option2);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading extensions:', error);
+            }
+        }
+
+        async function selectFilesByExtension() {
+            const extensionSelect = document.getElementById('extension-filter');
+            const recursive = document.getElementById('recursive-selection').checked;
+            const selectedExtension = extensionSelect.value;
+            
+            if (!selectedExtension) {
+                showCopyFeedback('Please select an extension first', 'warning');
+                return;
+            }
+            
+            try {
+                const currentPath = '{{ current_relative_path }}';
+                const response = await fetch('{{ url_for('files_by_extension') }}', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        extensions: [selectedExtension],
+                        current_path: currentPath,
+                        recursive: recursive
+                    })
+                });
+                
+                const data = await response.json();
+                if (response.ok && data.files) {
+                    // Add files to selection
+                    data.files.forEach(filePath => {
+                        if (!selectedFiles.includes(filePath)) {
+                            selectedFiles.push(filePath);
+                        }
+                    });
+                    
+                    saveSelectionToStorage();
+                    updateSelectionDisplay();
+                    syncVisibleCheckboxes();
+                    showCopyFeedback(`Selected ${data.files.length} ${selectedExtension} files`, 'success');
+                } else {
+                    showCopyFeedback(`Error: ${data.error || 'Failed to select files'}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error selecting files by extension:', error);
+                showCopyFeedback('Error selecting files by extension', 'error');
+            }
+        }
+
+        function selectAllVisible() {
+            const visibleCheckboxes = fileBrowserList.querySelectorAll('.file-checkbox');
+            let addedCount = 0;
+            
+            visibleCheckboxes.forEach(checkbox => {
+                if (!selectedFiles.includes(checkbox.value)) {
+                    selectedFiles.push(checkbox.value);
+                    addedCount++;
+                }
+            });
+            
+            saveSelectionToStorage();
+            updateSelectionDisplay();
+            syncVisibleCheckboxes();
+            showCopyFeedback(`Selected ${addedCount} visible files`, 'success');
+        }
+
+        function clearAllSelections() {
+            selectedFiles = [];
+            selectedDirectories = [];
+            saveSelectionToStorage();
+            updateSelectionDisplay();
+            syncVisibleCheckboxes();
+            showCopyFeedback('All selections cleared', 'success');
+        }
+
+        async function selectCurrentDirectory() {
+            const recursive = document.getElementById('recursive-selection').checked;
+            const currentPath = '{{ current_relative_path }}';
+            
+            try {
+                let filesToAdd = [];
+                
+                if (recursive) {
+                    // Use the existing get_all_files_in_directory functionality
+                    const response = await fetch('{{ url_for('files_by_extension') }}', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            extensions: [], // Empty array means all extensions
+                            current_path: currentPath,
+                            recursive: true
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    if (response.ok && data.files) {
+                        filesToAdd = data.files;
+                    }
+                } else {
+                    // Get only visible files in current directory
+                    const visibleCheckboxes = fileBrowserList.querySelectorAll('.file-checkbox');
+                    filesToAdd = Array.from(visibleCheckboxes).map(cb => cb.value);
+                }
+                
+                // Add files to selection
+                let addedCount = 0;
+                filesToAdd.forEach(filePath => {
+                    if (!selectedFiles.includes(filePath)) {
+                        selectedFiles.push(filePath);
+                        addedCount++;
+                    }
+                });
+                
+                saveSelectionToStorage();
+                updateSelectionDisplay();
+                syncVisibleCheckboxes();
+                showCopyFeedback(`Selected ${addedCount} files from current directory${recursive ? ' (recursive)' : ''}`, 'success');
+                
+            } catch (error) {
+                console.error('Error selecting current directory:', error);
+                showCopyFeedback('Error selecting directory files', 'error');
+            }
+        }
+
+        // Search Modal Functions
+        function openSearchModal() {
+            const modal = document.getElementById('search-modal');
+            modal.classList.add('show');
+            document.getElementById('search-query').focus();
+        }
+
+        function closeSearchModal() {
+            const modal = document.getElementById('search-modal');
+            modal.classList.remove('show');
+        }
+
+        async function performSearch() {
+            const query = document.getElementById('search-query').value.trim();
+            const caseSensitive = document.getElementById('case-sensitive').checked;
+            const useRegex = document.getElementById('use-regex').checked;
+            const searchExtensionsSelect = document.getElementById('search-extensions');
+            const selectedExtensions = Array.from(searchExtensionsSelect.selectedOptions).map(opt => opt.value).filter(v => v);
+            
+            if (!query) {
+                showSearchStatus('Please enter a search query');
+                return;
+            }
+            
+            showSearchStatus('Searching...');
+            document.getElementById('results-list').innerHTML = '';
+            
+            try {
+                const currentPath = '{{ current_relative_path }}';
+                const response = await fetch('{{ url_for('search_content') }}', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        query: query,
+                        current_path: currentPath,
+                        file_extensions: selectedExtensions,
+                        case_sensitive: caseSensitive,
+                        use_regex: useRegex,
+                        max_results: 50
+                    })
+                });
+                
+                const data = await response.json();
+                if (response.ok && data.results) {
+                    displaySearchResults(data.results, query);
+                } else {
+                    showSearchStatus(`Error: ${data.error || 'Search failed'}`);
+                }
+            } catch (error) {
+                console.error('Search error:', error);
+                showSearchStatus('Search failed: ' + error.message);
+            }
+        }
+
+        function displaySearchResults(results, query) {
+            const resultsList = document.getElementById('results-list');
+            const searchStatus = document.getElementById('search-status');
+            
+            if (results.length === 0) {
+                showSearchStatus('No matches found');
+                return;
+            }
+            
+            showSearchStatus(`Found ${results.length} files with matches`);
+            
+            results.forEach(result => {
+                const resultItem = document.createElement('div');
+                resultItem.className = 'search-result-item';
+                resultItem.onclick = () => selectSearchResultFile(result.file);
+                
+                const fileName = document.createElement('div');
+                fileName.className = 'search-result-file';
+                fileName.textContent = result.file;
+                
+                const matchesList = document.createElement('ul');
+                matchesList.className = 'search-result-matches';
+                
+                result.matches.slice(0, 5).forEach(match => {
+                    const matchItem = document.createElement('li');
+                    matchItem.className = 'search-result-match';
+                    
+                    const lineNumber = document.createElement('span');
+                    lineNumber.className = 'search-result-line';
+                    lineNumber.textContent = `Line ${match.line}: `;
+                    
+                    const content = document.createElement('span');
+                    content.innerHTML = highlightSearchMatch(match.content, query);
+                    
+                    matchItem.appendChild(lineNumber);
+                    matchItem.appendChild(content);
+                    matchesList.appendChild(matchItem);
+                });
+                
+                if (result.matches.length > 5) {
+                    const moreItem = document.createElement('li');
+                    moreItem.className = 'search-result-match';
+                    moreItem.style.fontStyle = 'italic';
+                    moreItem.style.color = 'var(--text-muted)';
+                    moreItem.textContent = `... and ${result.matches.length - 5} more matches`;
+                    matchesList.appendChild(moreItem);
+                }
+                
+                resultItem.appendChild(fileName);
+                resultItem.appendChild(matchesList);
+                resultsList.appendChild(resultItem);
+            });
+        }
+
+        function highlightSearchMatch(content, query) {
+            if (!query) return content;
+            
+            // Simple highlighting for non-regex searches
+            const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+            return content.replace(regex, '<span class="search-match-highlight">$1</span>');
+        }
+
+        function selectSearchResultFile(filePath) {
+            if (!selectedFiles.includes(filePath)) {
+                selectedFiles.push(filePath);
+                saveSelectionToStorage();
+                updateSelectionDisplay();
+                syncVisibleCheckboxes();
+                showCopyFeedback(`Added ${filePath} to selection`, 'success');
+            } else {
+                showCopyFeedback(`${filePath} already selected`, 'warning');
+            }
+        }
+
+        function showSearchStatus(message) {
+            document.getElementById('search-status').textContent = message;
+        }
+
+        // Keyboard Shortcuts
+        function handleKeyboardShortcuts(event) {
+            // Shift + Space: Open search modal
+            if (event.shiftKey && event.code === 'Space') {
+                event.preventDefault();
+                openSearchModal();
+                return;
+            }
+            
+            // Ctrl/Cmd + A: Select all visible files (when not in input)
+            if ((event.ctrlKey || event.metaKey) && event.code === 'KeyA') {
+                if (!['INPUT', 'TEXTAREA'].includes(event.target.tagName)) {
+                    event.preventDefault();
+                    selectAllVisible();
+                    return;
+                }
+            }
+            
+            // Escape: Close modal or clear search
+            if (event.code === 'Escape') {
+                const modal = document.getElementById('search-modal');
+                if (modal.classList.contains('show')) {
+                    closeSearchModal();
+                } else if (event.target.id === 'search-query') {
+                    event.target.value = '';
+                }
+                return;
+            }
+            
+            // Enter in search: Perform search
+            if (event.code === 'Enter' && event.target.id === 'search-query') {
+                performSearch();
+                return;
+            }
+        }
+
+        // Event Listeners for new functionality
+        document.addEventListener('keydown', handleKeyboardShortcuts);
+        
+        document.getElementById('search-files-btn')?.addEventListener('click', openSearchModal);
+        document.getElementById('close-search-modal')?.addEventListener('click', closeSearchModal);
+        document.getElementById('start-search')?.addEventListener('click', performSearch);
+        
+        document.getElementById('select-all-visible')?.addEventListener('click', selectAllVisible);
+        document.getElementById('clear-selection')?.addEventListener('click', clearAllSelections);
+        document.getElementById('select-by-extension')?.addEventListener('click', selectFilesByExtension);
+        document.getElementById('select-current-dir')?.addEventListener('click', selectCurrentDirectory);
+        
+        // Close modal when clicking outside
+        document.getElementById('search-modal')?.addEventListener('click', (event) => {
+            if (event.target.id === 'search-modal') {
+                closeSearchModal();
+            }
+        });
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeSelection();
+            loadAvailableExtensions();
+        });
     </script>
-
 </body>
 </html>

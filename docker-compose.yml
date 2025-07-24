@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  oyren-prompter:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - ".:/workspace"
+    environment:
+      - WORKSPACE_DIR=/workspace
+    restart: unless-stopped
+    stdin_open: true
+    tty: true 
