@@ -185,10 +185,10 @@ def run_server():
     print(f"--- Oyren Prompter ---")
     print(f"--- Serving files from: {BASE_DIR}")
     print(f"--- Static files from: {static_folder}")
-    print(f"--- Access in browser: http://127.0.0.1:5000")
+    print(f"--- Access in browser: http://127.0.0.1:37465")
     print("--- (Press CTRL+C to stop) ---")
     try:
-        app.run(host='127.0.0.1', port=5000, debug=False)
+        app.run(host='127.0.0.1', port=37465, debug=False)
     except KeyboardInterrupt:
         print("\n--- Server stopped ---")
         sys.exit(0)
@@ -202,5 +202,5 @@ if __name__ == '__main__':
     print(f"Template Folder: {template_folder}")
     print(f"Static Folder: {static_folder}")
     print("Run `python src/oyren_prompter/app.py` from your project root.") # Adjust path if needed
-    print("Access: http://127.0.0.1:5001")
-    app.run(host='127.0.0.1', port=5001, debug=True)
+    print("Access: http://127.0.0.1:37466")
+    app.run(host='127.0.0.1', port=37466, debug=True)

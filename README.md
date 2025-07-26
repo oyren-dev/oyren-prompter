@@ -30,30 +30,63 @@ Or, use the direct link: [https://buymeacoffee.com/vorashil](https://buymeacoffe
 
 ### Prerequisites
 
-- Python 3.7+
-- Git
-- `pipx` (recommended)
+- Docker (for npx/Docker options)
+- OR Python 3.7+ with pipx (for Python option)
 - Modern web browser
 
-Install `pipx` using Homebrew (macOS):
+For the recommended npx approach, you'll need Docker:
+- Visit https://www.docker.com/get-started
+- Download and install Docker Desktop for your OS
 
+For the Python alternative, install `pipx`:
 ``` 
-brew install pipx
+brew install pipx  # macOS with Homebrew
 pipx ensurepath 
 pipx --version
-``` 
-
-If `pipx` doesn't get installed properly, try restarting your terminal.
+```
 
 ---
 
 ### 🛠 How to Run
 
-You can launch Oyren Prompter with a single command:
+#### Option 1: Using npx (Simplest - Recommended)
+
+Run Oyren Prompter with a single command:
+
+```bash
+npx oyren-prompter
+```
+
+You can also specify a custom port:
+```bash
+npx oyren-prompter -p 8080
+```
+
+**Requirements:** Docker must be installed on your system. If not installed, you'll see instructions on how to get it.
+
+#### Option 2: Using Docker directly
+
+Run Oyren Prompter in a container:
+
+```bash
+# Pull and run the latest image
+docker run -v $(pwd):/project -p 37465:37465 oyrendev/prompter:latest
+```
+
+The `-v $(pwd):/project` flag mounts your current directory into the container, allowing Oyren Prompter to access your files. The container runs on port 37465.
+
+For Windows PowerShell, use:
+```powershell
+docker run -v ${PWD}:/project -p 37465:37465 oyrendev/prompter:latest
+```
+
+#### Option 3: Using pipx (Python alternative)
+
+If you prefer not to use Docker, you can launch Oyren Prompter using pipx:
 
 ``` 
 pipx run --spec git+https://github.com/oyren-dev/oyren-prompter.git oyren-prompter
-``` 
+```
 
 This will start a local Flask server that scans your files. You can then:
 

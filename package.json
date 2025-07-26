@@ -1,0 +1,32 @@
+{
+  "name": "oyren-prompter",
+  "version": "1.0.0",
+  "description": "A local web tool that allows you to browse and select multiple files, combine their contents, and prepend a custom prompt for AI tools",
+  "main": "index.js",
+  "bin": {
+    "oyren-prompter": "./bin/oyren-prompter.js"
+  },
+  "scripts": {
+    "start": "node ./bin/oyren-prompter.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oyren-dev/oyren-prompter.git"
+  },
+  "keywords": [
+    "ai",
+    "prompt",
+    "file-browser",
+    "developer-tools",
+    "oyren"
+  ],
+  "author": "Oyren Dev",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/oyren-dev/oyren-prompter/issues"
+  },
+  "homepage": "https://github.com/oyren-dev/oyren-prompter#readme",
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
