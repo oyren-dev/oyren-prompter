@@ -1,1 +1,3 @@
-oyren_prompter
+docker-deploy.sh
+.pytest_cache/
+.idea/

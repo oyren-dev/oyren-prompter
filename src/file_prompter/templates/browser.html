@@ -202,6 +202,14 @@
                     </a>
                 </li>
                 {% endfor %}
+                {% if files %}
+                <li class="file-item" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #e9ecef;">
+                    <input type="checkbox" id="select-all-files" class="select-all-checkbox">
+                    <label for="select-all-files" style="font-weight: bold;">
+                        <span class="file-icon">✓</span> Select All Files
+                    </label>
+                </li>
+                {% endif %}
                 {% for file_item in files %}
                 <li class="file-item">
                     <!-- Checkbox value is the relative path -->
@@ -345,10 +353,20 @@
         // Checks/unchecks visible checkboxes based on the selectedFiles array
         function syncVisibleCheckboxes() {
             const checkboxes = fileBrowserList.querySelectorAll('.file-checkbox');
+            let allChecked = true;
             checkboxes.forEach(checkbox => {
                 // Check if the checkbox's value (path) is in our selected array
                 checkbox.checked = selectedFiles.includes(checkbox.value);
+                if (!checkbox.checked) {
+                    allChecked = false;
+                }
             });
+            
+            // Update the select all checkbox state
+            const selectAllCheckbox = document.getElementById('select-all-files');
+            if (selectAllCheckbox) {
+                selectAllCheckbox.checked = allChecked && checkboxes.length > 0;
+            }
         }
 
         // Handle checkbox change event
@@ -367,6 +385,35 @@
                 selectedFiles = selectedFiles.filter(path => path !== filePath);
             }
 
+            // Save the updated array to storage
+            saveSelectionToStorage();
+            // Update the visual list and count
+            updateSelectionDisplay();
+            // Update select all checkbox state
+            syncVisibleCheckboxes();
+        }
+
+        // Handle select all checkbox change
+        function handleSelectAllChange(event) {
+            const selectAllCheckbox = event.target;
+            const isChecked = selectAllCheckbox.checked;
+            const fileCheckboxes = fileBrowserList.querySelectorAll('.file-checkbox');
+            
+            fileCheckboxes.forEach(checkbox => {
+                const filePath = checkbox.value;
+                if (isChecked) {
+                    // Add all files to selection
+                    if (!selectedFiles.includes(filePath)) {
+                        selectedFiles.push(filePath);
+                    }
+                    checkbox.checked = true;
+                } else {
+                    // Remove all visible files from selection
+                    selectedFiles = selectedFiles.filter(path => path !== filePath);
+                    checkbox.checked = false;
+                }
+            });
+            
             // Save the updated array to storage
             saveSelectionToStorage();
             // Update the visual list and count
@@ -492,6 +539,8 @@
              fileBrowserList.addEventListener('change', (event) => {
                  if (event.target.classList.contains('file-checkbox')) {
                      handleCheckboxChange(event); // Use the new handler
+                 } else if (event.target.classList.contains('select-all-checkbox')) {
+                     handleSelectAllChange(event); // Handle select all
                  }
              });
         }
